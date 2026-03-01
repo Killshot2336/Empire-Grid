@@ -739,7 +739,7 @@
       },
 
       // runtime-only (not saved)
-      _rt: { lastAutosaveAt: 0, toastUntil: 0, toast: null, audio:null }
+      _rt: { lastAutosaveAt: 0, toastUntil: 0, toast: null, audioPrimed:false, audio:null }
     };
   }
 
@@ -1776,8 +1776,10 @@
   }
 
   function serialize(state){
-    const safe = structuredClone(state);
-    delete safe._rt;
+    // Never clone runtime objects (audio contexts, DOM refs, etc.)
+    const tmp = { ...state };
+    delete tmp._rt; // strip runtime before cloning
+    const safe = structuredClone(tmp);
     // don't export inspector/pointer
     const json = JSON.stringify({meta:{ver:SAVE_VER, ts:Date.now()}, state:safe});
     return {json, sum: checksum(json)};
@@ -1811,6 +1813,8 @@
   // ---------- Procedural Audio (no files) ----------
   function ensureAudio(state){
     if (!state.settings.sound) return null;
+    // Chrome blocks AudioContext until a user gesture. We only create it after first pointer/tap.
+    if (!state._rt.audioPrimed) return null;
     if (state._rt.audio) return state._rt.audio;
     try{
       const ac = new (window.AudioContext || window.webkitAudioContext)();
@@ -1969,13 +1973,20 @@
 
   // ---------- Wiring Buttons ----------
   function openOverlay(id){
-    ui.overlays[id].classList.add("show");
+    const ov = ui.overlays[id];
+    if (!ov) return;
+    ov.classList.add('show');
   }
   function closeOverlay(id){
-    ui.overlays[id].classList.remove("show");
+    const ov = ui.overlays[id];
+    if (!ov) return;
+    ov.classList.remove('show');
   }
   document.querySelectorAll("[data-close]").forEach(b=>{
-    b.addEventListener("click", () => closeOverlay(b.getAttribute("data-close")));
+    b.addEventListener("click", () => {
+      const id = b.getAttribute("data-close");
+      if (id) closeOverlay(id);
+    });
   });
 
   el("btnHelp").onclick = () => openOverlay("help");
@@ -2126,6 +2137,7 @@
     pointer.down = true;
     // resume audio on first interaction if needed
     if (state.settings.sound){
+      state._rt.audioPrimed = true;
       const a = ensureAudio(state);
       if (a && a.ac.state === "suspended"){
         try{ await a.ac.resume(); }catch{}
@@ -2240,3 +2252,4 @@
 </script>
 </body>
 </html>
+
