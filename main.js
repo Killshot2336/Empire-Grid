@@ -406,7 +406,16 @@ function startTutorial() {
 
 /* Mobile admin: triple-tap corner */
 let cornerTaps = [];
+let allowMobileAdmin = false;
+
+// enable mobile admin only after first user interaction
+window.addEventListener("pointerup", () => {
+  allowMobileAdmin = true;
+}, { once: true });
+
 window.addEventListener("pointerdown", (e) => {
+  if (!allowMobileAdmin) return;
+
   if (boot && !boot.classList.contains("hidden")) return;
   const near = e.clientX < 60 && e.clientY < 60;
   if (!near) return;
