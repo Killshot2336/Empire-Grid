@@ -28,3 +28,4 @@ export class RNG {
   state() { return { s: this._s >>> 0 }; }
   loadState(st) { if (st?.s != null) this._s = st.s >>> 0; }
 }
+
