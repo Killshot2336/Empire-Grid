@@ -89,3 +89,4 @@ export class Input {
     this._last = null;
   }
 }
+
