@@ -1,4 +1,4 @@
-import { clamp, lerp } from "./util.js";
+ import { clamp, lerp } from "./util.js";
 
 export class EffectsManager {
   constructor() {
@@ -106,3 +106,4 @@ export class EffectsManager {
     } catch {}
   }
 }
+
