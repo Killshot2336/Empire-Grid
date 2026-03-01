@@ -345,3 +345,4 @@ export class RenderManager {
     return c;
   }
 }
+
