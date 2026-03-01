@@ -82,3 +82,4 @@ export class CrisisSystem {
     return { k: "CRITICAL", cls: "danger" };
   }
 }
+
