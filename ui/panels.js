@@ -327,3 +327,4 @@ export class Panels {
     this.right.querySelector("#aClose").onclick = () => this.right.querySelector("#panel").classList.add("hidden");
   }
 }
+
