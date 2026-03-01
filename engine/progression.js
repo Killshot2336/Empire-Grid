@@ -1,3 +1,4 @@
+
 import { clamp } from "./util.js";
 
 const DOCTRINES = [
@@ -204,3 +205,4 @@ export class Progression {
     this._xp = 1e9;
   }
 }
+
