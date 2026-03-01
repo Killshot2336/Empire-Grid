@@ -2,67 +2,2241 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <title>Empire Grid</title>
-  <link rel="stylesheet" href="./style.css" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Empire Grid (Baker’s Engine v1)</title>
+  <style>
+    :root{
+      --bg0:#070A12; --bg1:#0B1020; --card:#0E1630cc; --card2:#0D142Aee;
+      --line:#1b2a55; --text:#e9efff; --mut:#a8b6e8;
+      --a:#76a7ff; --b:#7CFFB2; --c:#FFB46B; --d:#B38CFF; --r:#ff5a7a; --y:#ffd36b;
+      --shadow: 0 14px 40px rgba(0,0,0,.45);
+      --radius: 18px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%; margin:0; background:radial-gradient(1200px 900px at 20% 10%, #101a3d 0%, transparent 55%),
+                               radial-gradient(1200px 900px at 80% 30%, #1b1440 0%, transparent 55%),
+                               linear-gradient(180deg, var(--bg1), var(--bg0));
+              color:var(--text); font: 14px/1.35 system-ui, -apple-system, Segoe UI, Roboto, Arial;}
+    button, input, select{font:inherit}
+    .app{display:grid; grid-template-columns: 360px 1fr; gap:14px; padding:14px; height:100%;}
+    @media (max-width: 980px){
+      .app{grid-template-columns: 1fr; grid-template-rows:auto 1fr; padding:10px}
+      .left{order:2} .stage{order:1; min-height:55vh}
+    }
+
+    .left{display:flex; flex-direction:column; gap:12px;}
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      border:1px solid rgba(140,170,255,.14);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card .hd{display:flex; align-items:center; justify-content:space-between; padding:12px 12px 10px;
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,0));
+      border-bottom:1px solid rgba(140,170,255,.12);
+    }
+    .card .hd h2{margin:0; font-size:14px; letter-spacing:.2px; color:#f2f6ff}
+    .card .bd{padding:12px}
+
+    .bars{display:grid; gap:9px}
+    .bar{display:grid; gap:6px}
+    .bar .top{display:flex; justify-content:space-between; color:var(--mut); font-size:12px}
+    .meter{height:10px; border-radius:999px; overflow:hidden; background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.08);
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.2);
+    }
+    .fill{height:100%; width:0%; border-radius:999px; transition: width .2s linear;}
+    .mini{font-size:12px; color:var(--mut)}
+    .kpi{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+    .pill{padding:10px; border-radius:14px; background:rgba(0,0,0,.22);
+      border:1px solid rgba(140,170,255,.10)}
+    .pill .lab{color:var(--mut); font-size:12px}
+    .pill .val{font-weight:700; font-size:16px; margin-top:4px}
+    .pill .sub{color:var(--mut); font-size:12px; margin-top:2px}
+
+    .tools{display:grid; gap:10px}
+    .row{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+    .btn{
+      cursor:pointer; user-select:none;
+      border:1px solid rgba(140,170,255,.18);
+      background:linear-gradient(180deg, rgba(140,170,255,.14), rgba(140,170,255,.06));
+      color:var(--text);
+      padding:10px 10px;
+      border-radius:14px;
+      box-shadow: 0 10px 26px rgba(0,0,0,.35);
+      transition: transform .08s ease, filter .15s ease;
+    }
+    .btn:hover{filter:brightness(1.06)}
+    .btn:active{transform: translateY(1px)}
+    .btn.ghost{background:rgba(255,255,255,.05)}
+    .btn.danger{border-color:rgba(255,90,122,.35); background:linear-gradient(180deg, rgba(255,90,122,.22), rgba(255,90,122,.08))}
+    .btn.good{border-color:rgba(124,255,178,.30); background:linear-gradient(180deg, rgba(124,255,178,.18), rgba(124,255,178,.06))}
+    .btn.small{padding:8px 10px; border-radius:12px; font-size:12px}
+    .btn.wide{flex:1}
+    .seg{display:flex; gap:8px}
+    .seg button{flex:1}
+
+    .shop{display:grid; gap:10px}
+    .item{display:grid; grid-template-columns: 1fr auto; gap:10px; padding:10px;
+      border-radius:16px; border:1px solid rgba(140,170,255,.12); background:rgba(0,0,0,.22)}
+    .item .name{font-weight:700}
+    .item .desc{color:var(--mut); font-size:12px; margin-top:2px}
+    .item .cost{font-weight:700}
+    .tag{display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px; color:#dfe8ff;
+      border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.06); margin-left:6px}
+
+    .stage{position:relative; border-radius: var(--radius); overflow:hidden;
+      border:1px solid rgba(140,170,255,.14); box-shadow: var(--shadow);
+      background: radial-gradient(900px 500px at 50% 10%, rgba(118,167,255,.16), transparent 55%),
+                  radial-gradient(700px 700px at 70% 80%, rgba(179,140,255,.12), transparent 60%),
+                  linear-gradient(180deg, rgba(7,10,18,0.6), rgba(7,10,18,0.85));
+      min-height: 420px;
+    }
+    canvas{display:block; width:100%; height:100%}
+    .hudTop{
+      position:absolute; left:0; right:0; top:0; padding:10px;
+      display:flex; gap:10px; align-items:center; justify-content:space-between;
+      pointer-events:none;
+    }
+    .hudTop .chip{
+      pointer-events:auto;
+      display:flex; align-items:center; gap:10px;
+      padding:8px 10px; border-radius: 14px;
+      background: rgba(0,0,0,.35);
+      border:1px solid rgba(140,170,255,.14);
+      backdrop-filter: blur(6px);
+    }
+    .hudTop .chip .t{color:var(--mut); font-size:12px}
+    .hudTop .chip .v{font-weight:800}
+    .hudTop .right{display:flex; gap:10px}
+
+    .toast{
+      position:absolute; left:12px; bottom:12px; max-width:min(560px, calc(100% - 24px));
+      padding:10px 12px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.45);
+      border:1px solid rgba(140,170,255,.14);
+      box-shadow: 0 14px 34px rgba(0,0,0,.45);
+      backdrop-filter: blur(6px);
+      opacity:0; transform: translateY(8px);
+      transition: opacity .18s ease, transform .18s ease;
+      pointer-events:none;
+    }
+    .toast.show{opacity:1; transform: translateY(0)}
+    .toast .title{font-weight:800}
+    .toast .msg{color:var(--mut); margin-top:2px}
+
+    .overlay{
+      position:absolute; inset:0;
+      background: radial-gradient(900px 600px at 30% 20%, rgba(118,167,255,.20), transparent 60%),
+                  rgba(0,0,0,.62);
+      display:none;
+      align-items:center; justify-content:center;
+      padding:16px;
+    }
+    .overlay.show{display:flex}
+    .modal{
+      width:min(720px, 100%);
+      border-radius: 18px;
+      border:1px solid rgba(140,170,255,.18);
+      background: linear-gradient(180deg, rgba(14,22,48,.92), rgba(8,12,26,.92));
+      box-shadow: 0 22px 60px rgba(0,0,0,.6);
+      overflow:hidden;
+    }
+    .modal .mh{padding:14px 14px 10px; border-bottom:1px solid rgba(140,170,255,.14); display:flex; justify-content:space-between; align-items:center}
+    .modal .mh h3{margin:0; font-size:14px}
+    .modal .mb{padding:14px}
+    .steps{display:grid; gap:10px}
+    .step{padding:12px; border-radius:16px; border:1px solid rgba(140,170,255,.12); background: rgba(0,0,0,.22)}
+    .step b{display:block; margin-bottom:6px}
+    .mut{color:var(--mut)}
+    .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+    @media (max-width: 680px){ .grid2{grid-template-columns:1fr} }
+
+    .field{display:grid; gap:6px}
+    textarea{width:100%; min-height:110px; resize:vertical;
+      background:rgba(0,0,0,.25); color:var(--text);
+      border:1px solid rgba(140,170,255,.14); border-radius:14px; padding:10px}
+    .hr{height:1px; background:rgba(140,170,255,.12); margin:10px 0}
+
+    .kbd{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size:11px; padding:2px 6px; border-radius:8px; border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.06); color:#eaf0ff}
+
+    .hint{
+      position:absolute; right:12px; bottom:12px;
+      display:flex; gap:8px; align-items:center;
+      padding:8px 10px;
+      border-radius:14px;
+      background: rgba(0,0,0,.35);
+      border:1px solid rgba(140,170,255,.14);
+      color:var(--mut);
+      backdrop-filter: blur(6px);
+      pointer-events:none;
+    }
+
+    .devBadge{
+      display:none;
+      position:absolute; left:12px; top:54px;
+      padding:6px 10px; border-radius:999px;
+      background: rgba(255, 211, 107, .16);
+      border:1px solid rgba(255, 211, 107, .35);
+      color:#fff2c0; font-weight:800; font-size:12px;
+      backdrop-filter: blur(6px);
+    }
+    .devBadge.show{display:inline-flex}
+  </style>
 </head>
 <body>
-  <div id="boot">
-    <div class="bootCard">
-      <div class="logo">EMPIRE GRID</div>
-      <div class="tag">Neon-Industrial Megaregion Builder</div>
-      <div class="sub">Survival + Creative • Seeded Worlds • Deep Builds</div>
-      <div class="bootRow">
-        <button id="btnStart">Start</button>
-        <button id="btnContinue" class="ghost">Continue</button>
+<div class="app">
+  <div class="left">
+    <div class="card">
+      <div class="hd">
+        <h2>Empire Grid <span class="tag">Baker’s Engine v1</span></h2>
+        <button class="btn small ghost" id="btnHelp">Tutorial</button>
       </div>
-      <div class="bootRow small">
-        <input id="seedInput" placeholder="Seed (optional)" />
-        <select id="modeSelect">
-          <option value="survival" selected>Survival</option>
-          <option value="creative">Creative</option>
-        </select>
+      <div class="bd">
+        <div class="bars">
+          <div class="bar">
+            <div class="top"><span>Credits</span><span id="tCredits">0</span></div>
+            <div class="meter"><div class="fill" id="mCredits" style="background:linear-gradient(90deg,var(--a),var(--d))"></div></div>
+          </div>
+          <div class="bar">
+            <div class="top"><span>Power</span><span id="tPower">0 / 0</span></div>
+            <div class="meter"><div class="fill" id="mPower" style="background:linear-gradient(90deg,var(--d),var(--a))"></div></div>
+          </div>
+          <div class="bar">
+            <div class="top"><span>Population</span><span id="tPop">0</span></div>
+            <div class="meter"><div class="fill" id="mPop" style="background:linear-gradient(90deg,var(--b),var(--a))"></div></div>
+          </div>
+          <div class="bar">
+            <div class="top"><span>Stability</span><span id="tStab">100%</span></div>
+            <div class="meter"><div class="fill" id="mStab" style="background:linear-gradient(90deg,var(--b),var(--y),var(--r))"></div></div>
+          </div>
+          <div class="bar">
+            <div class="top"><span>Environment</span><span id="tEnv">100%</span></div>
+            <div class="meter"><div class="fill" id="mEnv" style="background:linear-gradient(90deg,var(--b),#6be6ff,var(--c))"></div></div>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="kpi">
+          <div class="pill">
+            <div class="lab">Volatility</div>
+            <div class="val" id="kVol">0.00</div>
+            <div class="sub" id="kVolSub">stable</div>
+          </div>
+          <div class="pill">
+            <div class="lab">Complexity</div>
+            <div class="val" id="kCx">0.00</div>
+            <div class="sub" id="kCxSub">low</div>
+          </div>
+          <div class="pill">
+            <div class="lab">Pressure</div>
+            <div class="val" id="kPr">0.00</div>
+            <div class="sub" id="kPrSub">low</div>
+          </div>
+          <div class="pill">
+            <div class="lab">Tick</div>
+            <div class="val" id="kTick">0</div>
+            <div class="sub" id="kSpeed">1x</div>
+          </div>
+        </div>
       </div>
-      <div class="bootRow tiny">
-        <label><input id="chkAutoPerf" type="checkbox" checked> Auto performance</label>
-        <label><input id="chkCreator" type="checkbox"> Creator mode overlay</label>
+    </div>
+
+    <div class="card">
+      <div class="hd">
+        <h2>Build</h2>
+        <div class="seg">
+          <button class="btn small" id="bSpeed1">1x</button>
+          <button class="btn small ghost" id="bSpeed2">2x</button>
+          <button class="btn small ghost" id="bSpeed4">4x</button>
+          <button class="btn small ghost" id="bPause">Pause</button>
+        </div>
       </div>
-      <div class="bootFoot" id="bootFoot"></div>
+      <div class="bd">
+        <div class="tools">
+          <div class="row">
+            <button class="btn wide" data-tool="RES">Residential</button>
+            <button class="btn wide" data-tool="IND">Industry</button>
+          </div>
+          <div class="row">
+            <button class="btn wide" data-tool="PWR">Power Plant</button>
+            <button class="btn wide" data-tool="HOS">Hospital</button>
+          </div>
+          <div class="row">
+            <button class="btn wide" data-tool="POL">Police</button>
+            <button class="btn wide" data-tool="HUB">Logistics Hub</button>
+          </div>
+          <div class="row">
+            <button class="btn wide ghost" id="btnUpgrade">Upgrade Selected</button>
+            <button class="btn wide danger" id="btnBulldoze">Bulldoze Selected</button>
+          </div>
+
+          <div class="row">
+            <button class="btn wide good" id="btnUnlock">Unlock Next Sector</button>
+            <button class="btn wide ghost" id="btnPolicies">Policies</button>
+          </div>
+
+          <div class="row">
+            <button class="btn wide ghost" id="btnSave">Save</button>
+            <button class="btn wide ghost" id="btnLoad">Load</button>
+          </div>
+
+          <div class="row">
+            <button class="btn wide ghost" id="btnExport">Export</button>
+            <button class="btn wide ghost" id="btnImport">Import</button>
+          </div>
+
+          <div class="mini">
+            Tip: click tiles to place. Select a tile to upgrade/bulldoze. Dev panel: <span class="kbd">Ctrl</span>+<span class="kbd">Shift</span>+<span class="kbd">D</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="hd"><h2>Market</h2><button class="btn small ghost" id="btnSettings">Settings</button></div>
+      <div class="bd">
+        <div class="shop" id="shop"></div>
+      </div>
     </div>
   </div>
 
-  <canvas id="game"></canvas>
+  <div class="stage" id="stage">
+    <canvas id="cv"></canvas>
 
-  <!-- HUD / Panels -->
-  <div id="hudRoot"></div>
-
-  <!-- Spotlight tutorial -->
-  <div id="spotlight" class="hidden">
-    <div id="spotMask"></div>
-    <div id="spotBox">
-      <div id="spotTitle"></div>
-      <div id="spotText"></div>
-      <div id="spotButtons">
-        <button id="spotNext">Next</button>
-        <button id="spotSkip" class="ghost">Skip</button>
+    <div class="hudTop">
+      <div class="chip">
+        <div>
+          <div class="t">Selected</div>
+          <div class="v" id="selTxt">None</div>
+        </div>
+        <div style="width:1px;height:26px;background:rgba(140,170,255,.14)"></div>
+        <div>
+          <div class="t">Mode</div>
+          <div class="v" id="modeTxt">Residential</div>
+        </div>
+      </div>
+      <div class="right">
+        <div class="chip">
+          <div>
+            <div class="t">Run</div>
+            <div class="v" id="runName">Empire Grid</div>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Admin overlay -->
-  <div id="adminLock" class="hidden">
-    <div class="adminCard">
-      <div class="adminTitle">Admin Console</div>
-      <div class="adminSub">Enter passcode</div>
-      <input id="adminPass" placeholder="Passcode" />
-      <div class="bootRow">
-        <button id="adminEnter">Enter</button>
-        <button id="adminCancel" class="ghost">Cancel</button>
-      </div>
-      <div class="bootFoot" id="adminMsg"></div>
+    <div class="devBadge" id="devBadge">DEV PANEL ON</div>
+
+    <div class="toast" id="toast">
+      <div class="title" id="toastTitle">Notice</div>
+      <div class="msg" id="toastMsg">...</div>
     </div>
-  </div>
 
-  <script type="module" src="main.js"></script>
+    <div class="hint" id="hint">
+      <span>Click to build • Right click (or long press) to inspect</span>
+    </div>
+
+    <!-- OVERLAYS -->
+    <div class="overlay" id="ovHelp">
+      <div class="modal">
+        <div class="mh">
+          <h3>Tutorial: Survive the Grid</h3>
+          <button class="btn small ghost" data-close="ovHelp">Close</button>
+        </div>
+        <div class="mb">
+          <div class="steps">
+            <div class="step">
+              <b>1) Build Power first</b>
+              <div class="mut">Power strain is the heart of the game. Stay under ~85% load or volatility climbs fast.</div>
+            </div>
+            <div class="step">
+              <b>2) Add Residential + Industry</b>
+              <div class="mut">Residential grows population (workforce). Industry earns credits but demands power + workforce.</div>
+            </div>
+            <div class="step">
+              <b>3) Watch Stability & Volatility</b>
+              <div class="mut">Stability drops when pressure rises. Volatility is the real danger: events start to chain.</div>
+            </div>
+            <div class="step">
+              <b>4) Services = shock absorbers</b>
+              <div class="mut">Hospitals reduce outbreak severity and speed recovery. Police reduce riot spread but can hurt long-term satisfaction if overused.</div>
+            </div>
+            <div class="step">
+              <b>5) Expand sectors carefully</b>
+              <div class="mut">Unlocking new sectors increases complexity. Big systems become fragile if over-connected.</div>
+            </div>
+            <div class="step">
+              <b>Controls</b>
+              <div class="mut">
+                Build: click tile • Select: click existing tile • Bulldoze/Upgrade: buttons<br/>
+                Dev Panel: <span class="kbd">Ctrl</span>+<span class="kbd">Shift</span>+<span class="kbd">D</span> (desktop)
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay" id="ovPolicies">
+      <div class="modal">
+        <div class="mh">
+          <h3>Policies (Doctrines)</h3>
+          <button class="btn small ghost" data-close="ovPolicies">Close</button>
+        </div>
+        <div class="mb">
+          <div class="mut">Pick one doctrine per tier. Doctrines stack and reshape the volatility curve. Tradeoffs are real.</div>
+          <div class="hr"></div>
+          <div class="grid2" id="polGrid"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay" id="ovSettings">
+      <div class="modal">
+        <div class="mh">
+          <h3>Settings</h3>
+          <button class="btn small ghost" data-close="ovSettings">Close</button>
+        </div>
+        <div class="mb">
+          <div class="grid2">
+            <div class="field">
+              <div class="mut">Graphics</div>
+              <label><input type="checkbox" id="gGlow" checked> Glow</label>
+              <label><input type="checkbox" id="gLines" checked> Network Lines</label>
+              <label><input type="checkbox" id="gParticles" checked> Particles</label>
+              <label><input type="checkbox" id="gHeat"> Heatmap (Pressure)</label>
+            </div>
+            <div class="field">
+              <div class="mut">Game</div>
+              <label>Difficulty
+                <select id="difficulty">
+                  <option value="0">Executive (Tier 1)</option>
+                  <option value="1">Director (Tier 2)</option>
+                  <option value="2">Architect (Tier 3)</option>
+                  <option value="3">Overclock (Tier 4)</option>
+                  <option value="4">Singularity (Tier 5)</option>
+                </select>
+              </label>
+              <label><input type="checkbox" id="soundOn" checked> Procedural Sound</label>
+              <label><input type="checkbox" id="autosaveOn" checked> Autosave</label>
+              <div class="row" style="margin-top:6px">
+                <button class="btn danger" id="btnResetRun">Reset Run</button>
+                <button class="btn danger" id="btnWipeAll">Wipe All Saves</button>
+              </div>
+            </div>
+          </div>
+          <div class="hr"></div>
+          <div class="mut">Tip: after changing graphics, reload once for best performance.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay" id="ovImport">
+      <div class="modal">
+        <div class="mh">
+          <h3>Import Save</h3>
+          <button class="btn small ghost" data-close="ovImport">Close</button>
+        </div>
+        <div class="mb">
+          <div class="field">
+            <div class="mut">Paste JSON here</div>
+            <textarea id="importBox" placeholder="paste save JSON..."></textarea>
+            <div class="row">
+              <button class="btn good" id="btnDoImport">Import</button>
+              <button class="btn ghost" data-close="ovImport">Cancel</button>
+            </div>
+            <div class="mut">Import overwrites current run.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay" id="ovExport">
+      <div class="modal">
+        <div class="mh">
+          <h3>Export Save</h3>
+          <button class="btn small ghost" data-close="ovExport">Close</button>
+        </div>
+        <div class="mb">
+          <div class="field">
+            <div class="mut">Copy JSON</div>
+            <textarea id="exportBox" readonly></textarea>
+            <div class="row">
+              <button class="btn good" id="btnCopyExport">Copy</button>
+              <button class="btn ghost" data-close="ovExport">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DEV PANEL -->
+    <div class="overlay" id="ovDev">
+      <div class="modal">
+        <div class="mh">
+          <h3>Dev Panel</h3>
+          <button class="btn small ghost" data-close="ovDev">Close</button>
+        </div>
+        <div class="mb">
+          <div class="mut">Tuning tools. This is for building/testing, not “cheating.”</div>
+          <div class="hr"></div>
+
+          <div class="grid2">
+            <div class="field">
+              <div class="mut">Live Readout</div>
+              <div class="step" id="devRead"></div>
+              <div class="row">
+                <button class="btn small good" id="devAddCredits">+50k Credits</button>
+                <button class="btn small good" id="devMaxStab">Stability 100%</button>
+                <button class="btn small good" id="devHealEnv">Environment 100%</button>
+              </div>
+              <div class="row">
+                <button class="btn small" id="devEventOutage">Trigger Outage</button>
+                <button class="btn small" id="devEventRiot">Trigger Riot</button>
+                <button class="btn small" id="devEventOutbreak">Trigger Outbreak</button>
+              </div>
+              <div class="row">
+                <button class="btn small danger" id="devClearEvents">Clear Events</button>
+                <button class="btn small danger" id="devTick1">Single Tick</button>
+              </div>
+            </div>
+
+            <div class="field">
+              <div class="mut">Curve Controls</div>
+              <div class="step">
+                <div class="mut">Pressure Mult</div>
+                <input type="range" id="rPr" min="0.5" max="2.0" step="0.01" value="1.00" style="width:100%">
+                <div class="mut">Complexity Mult</div>
+                <input type="range" id="rCx" min="0.5" max="2.0" step="0.01" value="1.00" style="width:100%">
+                <div class="mut">Volatility Steepness</div>
+                <input type="range" id="rVo" min="0.6" max="2.4" step="0.01" value="1.00" style="width:100%">
+                <div class="mut">Recovery Speed</div>
+                <input type="range" id="rRc" min="0.4" max="2.0" step="0.01" value="1.00" style="width:100%">
+                <div class="mut">Event Bias</div>
+                <input type="range" id="rEv" min="0.5" max="2.0" step="0.01" value="1.00" style="width:100%">
+              </div>
+              <div class="mut">These sliders apply instantly. Use them to tune “holy f***” moments.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* Empire Grid (Baker’s Engine v1)
+   Single-file: Canvas map + DOM UI
+   Save/export/import + policies + sectors + cascades + disease/riots + dev panel
+*/
+
+(() => {
+  // ---------- Utilities ----------
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const lerp  = (a, b, t) => a + (b - a) * t;
+  const rndSeeded = (seed) => { // mulberry32
+    let t = seed >>> 0;
+    return () => {
+      t += 0x6D2B79F5;
+      let x = Math.imul(t ^ (t >>> 15), 1 | t);
+      x ^= x + Math.imul(x ^ (x >>> 7), 61 | x);
+      return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
+    };
+  };
+  const now = () => performance.now();
+
+  // ---------- Constants ----------
+  const SAVE_KEY = "empire_grid_save_v1";
+  const SAVE_VER = 1;
+
+  const TILE = {
+    EMPTY: "EMPTY",
+    RES: "RES",
+    IND: "IND",
+    PWR: "PWR",
+    HOS: "HOS",
+    POL: "POL",
+    HUB: "HUB"
+  };
+
+  const TOOL_LABEL = {
+    RES: "Residential",
+    IND: "Industry",
+    PWR: "Power Plant",
+    HOS: "Hospital",
+    POL: "Police",
+    HUB: "Logistics Hub"
+  };
+
+  const COLORS = {
+    RES: [118,167,255],
+    IND: [255,180,107],
+    PWR: [179,140,255],
+    HOS: [124,255,178],
+    POL: [255,90,122],
+    HUB: [107,230,255],
+    EMPTY:[40,54,105]
+  };
+
+  // Base district stats by level (level 1..3)
+  const DISTRICT_STATS = {
+    RES: [
+      {cost: 80,  powerUse: 2,  popCap: 10,  popGrowth: 0.18, upkeep: 0.2, pressure: 0.2, env: -0.05},
+      {cost: 180, powerUse: 3,  popCap: 22,  popGrowth: 0.26, upkeep: 0.35, pressure: 0.35, env: -0.08},
+      {cost: 420, powerUse: 5,  popCap: 40,  popGrowth: 0.34, upkeep: 0.55, pressure: 0.55, env: -0.12},
+    ],
+    IND: [
+      {cost: 120, powerUse: 4, workforce: 8,  credits: 2.4, upkeep: 0.45, pressure: 0.55, env: -0.22},
+      {cost: 260, powerUse: 6, workforce: 14, credits: 3.9, upkeep: 0.75, pressure: 0.85, env: -0.32},
+      {cost: 560, powerUse: 9, workforce: 22, credits: 5.8, upkeep: 1.10, pressure: 1.20, env: -0.45},
+    ],
+    PWR: [
+      {cost: 140, powerGen: 10, upkeep: 0.55, pressure: 0.20, env: -0.18},
+      {cost: 320, powerGen: 18, upkeep: 0.90, pressure: 0.30, env: -0.25},
+      {cost: 760, powerGen: 30, upkeep: 1.35, pressure: 0.40, env: -0.34},
+    ],
+    HOS: [
+      {cost: 180, powerUse: 2, heal: 0.55, outbreakMit: 0.18, upkeep: 0.55, pressure: -0.15, env: 0.06},
+      {cost: 380, powerUse: 3, heal: 0.85, outbreakMit: 0.28, upkeep: 0.85, pressure: -0.25, env: 0.10},
+      {cost: 820, powerUse: 4, heal: 1.20, outbreakMit: 0.40, upkeep: 1.15, pressure: -0.35, env: 0.14},
+    ],
+    POL: [
+      {cost: 180, powerUse: 2, suppress: 0.55, riotMit: 0.18, upkeep: 0.55, pressure: -0.10, env: 0.00},
+      {cost: 380, powerUse: 3, suppress: 0.85, riotMit: 0.28, upkeep: 0.85, pressure: -0.18, env: 0.00},
+      {cost: 820, powerUse: 4, suppress: 1.20, riotMit: 0.40, upkeep: 1.15, pressure: -0.25, env: 0.00},
+    ],
+    HUB: [
+      {cost: 160, powerUse: 2, throughput: 0.70, upkeep: 0.40, pressure: 0.10, env: -0.06},
+      {cost: 340, powerUse: 3, throughput: 0.95, upkeep: 0.65, pressure: 0.15, env: -0.10},
+      {cost: 760, powerUse: 4, throughput: 1.20, upkeep: 0.95, pressure: 0.20, env: -0.14},
+    ],
+  };
+
+  // Policies (doctrines): 3 tiers, choose one per tier
+  const POLICY_TIERS = [
+    {
+      title: "Tier 1: Growth Doctrine",
+      options: [
+        {id:"GROWTH", name:"Growth Mandate", desc:"+10% population growth. +8% pressure.", mods:{popGrowth:1.10, pressure:1.08}},
+        {id:"BALANCE", name:"Balanced Development", desc:"-6% volatility steepness. -6% credits.", mods:{volSteep:0.94, credits:0.94}},
+        {id:"INDUSTRY", name:"Industrial Drive", desc:"+12% credits. +10% environment damage.", mods:{credits:1.12, envDamage:1.10}},
+      ]
+    },
+    {
+      title: "Tier 2: Control Doctrine",
+      options: [
+        {id:"CIVIC", name:"Civic Investment", desc:"+12% recovery. -6% pressure.", mods:{recovery:1.12, pressure:0.94}},
+        {id:"SURVEIL", name:"Surveillance Grid", desc:"-18% riot chance. -6% stability regen.", mods:{riotChance:0.82, stabRegen:0.94}},
+        {id:"AUTOMATE", name:"Automation Priority", desc:"+10% credits. +14% volatility.", mods:{credits:1.10, volatility:1.14}},
+      ]
+    },
+    {
+      title: "Tier 3: Resilience Doctrine",
+      options: [
+        {id:"GREEN", name:"Eco Buffer", desc:"+10% environment recovery. -6% credits.", mods:{envRegen:1.10, credits:0.94}},
+        {id:"REDUND", name:"Redundancy Standard", desc:"-10% cascade spread. +6% upkeep.", mods:{spread:0.90, upkeep:1.06}},
+        {id:"OVERCLK", name:"Overclock Protocol", desc:"+16% power gen. +10% power strain pressure.", mods:{powerGen:1.16, powerPressure:1.10}},
+      ]
+    }
+  ];
+
+  // Sector types (biomes) — randomized options per unlock
+  const SECTOR_TYPES = [
+    {id:"IND_FRONT", name:"Industrial Frontier", desc:"+credits +pressure +env damage", mods:{credits:1.10, pressure:1.10, envDamage:1.12}},
+    {id:"METRO",     name:"Metro Belt",          desc:"+pop growth +disease risk",     mods:{popGrowth:1.10, outbreakChance:1.18}},
+    {id:"ECO",       name:"Eco Buffer",          desc:"+env regen -credits",           mods:{envRegen:1.18, credits:0.92}},
+    {id:"CORP",      name:"Corporate Zone",      desc:"+policies impact +volatility",  mods:{policyPower:1.12, volatility:1.10}},
+    {id:"HARSH",     name:"Harsh Climate",       desc:"+upkeep +power pressure",      mods:{upkeep:1.10, powerPressure:1.10}},
+    {id:"STABLE",    name:"Stable Plateau",      desc:"-pressure -spread",            mods:{pressure:0.92, spread:0.92}},
+  ];
+
+  // Difficulty tiers
+  const DIFF = [
+    {name:"Executive",  pr:1.00, cx:1.00, vo:1.00, ev:1.00, rc:1.00},
+    {name:"Director",   pr:1.08, cx:1.10, vo:1.12, ev:1.10, rc:0.96},
+    {name:"Architect",  pr:1.16, cx:1.22, vo:1.28, ev:1.20, rc:0.92},
+    {name:"Overclock",  pr:1.26, cx:1.36, vo:1.46, ev:1.30, rc:0.88},
+    {name:"Singularity",pr:1.38, cx:1.52, vo:1.70, ev:1.42, rc:0.84},
+  ];
+
+  // ---------- State ----------
+  function freshState(seed) {
+    const rand = rndSeeded(seed);
+    const W = 22, H = 14; // starting sector size
+    const grid = [];
+    for (let y=0;y<H;y++){
+      const row = [];
+      for (let x=0;x<W;x++){
+        row.push({t:TILE.EMPTY, lvl:0, hp:1.0, flags:{}, noise: rand()});
+      }
+      grid.push(row);
+    }
+    return {
+      saveVersion: SAVE_VER,
+      build: "v1",
+      seed,
+      tick: 0,
+      speed: 1,
+      paused: false,
+
+      // meta-ish
+      difficulty: 0,
+      policies: { picks: [null,null,null] },
+      sectors: {
+        ring: 0,
+        unlocked: 1,
+        offered: null, // offered choices for next unlock
+        list: [{id:"CORE", name:"Core Sector", mods:{}}],
+      },
+
+      // core resources
+      credits: 420,
+      population: 0,
+      workforce: 0,
+      stability: 100,
+      environment: 100,
+
+      // derived
+      powerCapacity: 0,
+      powerUsed: 0,
+      pressure: 0,
+      complexity: 0,
+      volatility: 0,
+      volTrend: 0,
+
+      // health of city systems
+      upkeep: 0,
+
+      // grid
+      W, H,
+      grid,
+
+      // selection/tool
+      tool: TILE.RES,
+      selected: null,
+
+      // events
+      events: [],
+
+      // tuning knobs (dev panel)
+      tune: {pr:1, cx:1, vo:1, rc:1, ev:1},
+
+      // settings
+      settings: {
+        glow: true,
+        lines: true,
+        particles: true,
+        heat: false,
+        sound: true,
+        autosave: true,
+      },
+
+      // runtime-only (not saved)
+      _rt: { lastAutosaveAt: 0, toastUntil: 0, toast: null, audio:null }
+    };
+  }
+
+  // ---------- DOM ----------
+  const el = (id) => document.getElementById(id);
+  const cv = el("cv");
+  const stage = el("stage");
+  const ctx = cv.getContext("2d", { alpha: false });
+
+  const ui = {
+    tCredits: el("tCredits"),
+    tPower: el("tPower"),
+    tPop: el("tPop"),
+    tStab: el("tStab"),
+    tEnv: el("tEnv"),
+    mCredits: el("mCredits"),
+    mPower: el("mPower"),
+    mPop: el("mPop"),
+    mStab: el("mStab"),
+    mEnv: el("mEnv"),
+
+    kVol: el("kVol"),
+    kVolSub: el("kVolSub"),
+    kCx: el("kCx"),
+    kCxSub: el("kCxSub"),
+    kPr: el("kPr"),
+    kPrSub: el("kPrSub"),
+    kTick: el("kTick"),
+    kSpeed: el("kSpeed"),
+
+    selTxt: el("selTxt"),
+    modeTxt: el("modeTxt"),
+    runName: el("runName"),
+
+    toast: el("toast"),
+    toastTitle: el("toastTitle"),
+    toastMsg: el("toastMsg"),
+
+    devBadge: el("devBadge"),
+
+    shop: el("shop"),
+
+    overlays: {
+      help: el("ovHelp"),
+      policies: el("ovPolicies"),
+      settings: el("ovSettings"),
+      import: el("ovImport"),
+      export: el("ovExport"),
+      dev: el("ovDev"),
+    },
+
+    polGrid: el("polGrid"),
+
+    // settings inputs
+    gGlow: el("gGlow"),
+    gLines: el("gLines"),
+    gParticles: el("gParticles"),
+    gHeat: el("gHeat"),
+    difficulty: el("difficulty"),
+    soundOn: el("soundOn"),
+    autosaveOn: el("autosaveOn"),
+    btnResetRun: el("btnResetRun"),
+    btnWipeAll: el("btnWipeAll"),
+
+    // import/export
+    importBox: el("importBox"),
+    exportBox: el("exportBox"),
+
+    // dev
+    devRead: el("devRead"),
+    rPr: el("rPr"), rCx: el("rCx"), rVo: el("rVo"), rRc: el("rRc"), rEv: el("rEv"),
+  };
+
+  // ---------- Toast ----------
+  function toast(state, title, msg, ms=2500){
+    state._rt.toast = {title, msg};
+    state._rt.toastUntil = now() + ms;
+    ui.toastTitle.textContent = title;
+    ui.toastMsg.textContent = msg;
+    ui.toast.classList.add("show");
+  }
+
+  // ---------- Policies UI ----------
+  function renderPolicies(state){
+    ui.polGrid.innerHTML = "";
+    POLICY_TIERS.forEach((tier, ti) => {
+      const pick = state.policies.picks[ti];
+      const box = document.createElement("div");
+      box.className = "step";
+      box.innerHTML = `<b>${tier.title}</b><div class="mut">${pick ? "Selected: " + pick : "Choose one option"}.</div><div class="hr"></div>`;
+      tier.options.forEach(opt => {
+        const btn = document.createElement("button");
+        btn.className = "btn small " + (pick === opt.id ? "good" : "ghost");
+        btn.style.width = "100%";
+        btn.style.justifyContent = "space-between";
+        btn.innerHTML = `<span><b>${opt.name}</b><div class="mut" style="font-weight:400">${opt.desc}</div></span><span>${pick===opt.id?"✓":"Select"}</span>`;
+        btn.onclick = () => {
+          state.policies.picks[ti] = opt.id;
+          toast(state, "Doctrine locked", `${opt.name} applied.`);
+          renderPolicies(state);
+        };
+        box.appendChild(btn);
+        box.appendChild(document.createElement("div")).style.height="8px";
+      });
+      ui.polGrid.appendChild(box);
+    });
+  }
+
+  // ---------- Sector offer ----------
+  function offerSectors(state){
+    const rand = rndSeeded(state.seed + state.sectors.unlocked * 9973 + state.tick);
+    const picks = [];
+    while(picks.length < 3){
+      const s = SECTOR_TYPES[Math.floor(rand() * SECTOR_TYPES.length)];
+      if (!picks.find(p => p.id === s.id)) picks.push(s);
+    }
+    state.sectors.offered = picks.map(p => p.id);
+    return picks;
+  }
+
+  // ---------- Market / Shop ----------
+  const MARKET = [
+    {id:"UPG_RES", name:"Housing Retrofit", desc:"+6% population growth (global).", cost: 850, apply:(st)=>addMod(st, {popGrowth:1.06})},
+    {id:"UPG_IND", name:"Industry Optimization", desc:"+6% credits (global).", cost: 900, apply:(st)=>addMod(st, {credits:1.06})},
+    {id:"UPG_PWR", name:"Grid Regulators", desc:"-6% power pressure.", cost: 1100, apply:(st)=>addMod(st, {powerPressure:0.94})},
+    {id:"UPG_MED", name:"Public Health Program", desc:"-10% outbreak chance.", cost: 950, apply:(st)=>addMod(st, {outbreakChance:0.90})},
+    {id:"UPG_SEC", name:"Civic Resilience", desc:"+8% recovery speed.", cost: 980, apply:(st)=>addMod(st, {recovery:1.08})},
+  ];
+
+  function renderMarket(state){
+    ui.shop.innerHTML = "";
+    MARKET.forEach(m => {
+      const it = document.createElement("div");
+      it.className = "item";
+      it.innerHTML = `<div>
+        <div class="name">${m.name}</div>
+        <div class="desc">${m.desc}</div>
+      </div>
+      <div style="display:grid;gap:8px;justify-items:end">
+        <div class="cost">${fmt(m.cost)}¢</div>
+        <button class="btn small ${state.credits>=m.cost?"":"ghost"}">Buy</button>
+      </div>`;
+      it.querySelector("button").onclick = () => {
+        if (state.credits < m.cost) return toast(state, "Not enough credits", "Grow industry or stabilize output.");
+        state.credits -= m.cost;
+        m.apply(state);
+        toast(state, "Purchased", m.name);
+        renderMarket(state);
+      };
+      ui.shop.appendChild(it);
+    });
+  }
+
+  // ---------- Modifiers ----------
+  function baseMods(){
+    return {
+      credits:1, popGrowth:1, powerGen:1, envDamage:1, envRegen:1,
+      pressure:1, volatility:1, volSteep:1, spread:1, recovery:1,
+      upkeep:1, powerPressure:1,
+      riotChance:1, outbreakChance:1, stabRegen:1,
+      policyPower:1,
+    };
+  }
+  function addMod(state, mods){
+    // simple global mod stack: multiplicative
+    state._mods = state._mods || baseMods();
+    for (const k in mods){
+      state._mods[k] = (state._mods[k] ?? 1) * mods[k];
+    }
+  }
+  function resolveMods(state){
+    // rebuild each tick from policy picks + sector mods + market mods (_mods)
+    let mods = baseMods();
+
+    // difficulty
+    const d = DIFF[state.difficulty] || DIFF[0];
+    mods.pressure *= d.pr;
+    mods.volatility *= d.vo;
+    mods.volSteep *= d.vo;
+    mods.recovery *= d.rc;
+    mods.riotChance *= d.ev;
+    mods.outbreakChance *= d.ev;
+
+    // policies
+    POLICY_TIERS.forEach((tier, ti) => {
+      const pick = state.policies.picks[ti];
+      if (!pick) return;
+      const opt = tier.options.find(o => o.id === pick);
+      if (!opt) return;
+      const pow = mods.policyPower; // allows Corporate Zone to amplify
+      for (const k in opt.mods){
+        mods[k] = (mods[k] ?? 1) * (1 + ((opt.mods[k] - 1) * pow));
+      }
+    });
+
+    // sectors (all unlocked sectors apply weakly; ring count adds complexity anyway)
+    for (const s of state.sectors.list){
+      if (!s.mods) continue;
+      for (const k in s.mods){
+        mods[k] = (mods[k] ?? 1) * s.mods[k];
+      }
+    }
+
+    // market purchases
+    if (state._mods){
+      for (const k in state._mods){
+        mods[k] = (mods[k] ?? 1) * state._mods[k];
+      }
+    }
+
+    // dev tune multipliers
+    mods.pressure *= state.tune.pr;
+    mods.volatility *= state.tune.vo;
+    // complexity mult handled separately
+    // recovery handled separately
+
+    state._modsResolved = mods;
+    return mods;
+  }
+
+  // ---------- Events ----------
+  // event object: {id,type,stage,sev,ttl,origin:{x,y},spread, data}
+  let _eid = 1;
+  function pushEvent(state, type, origin, sev=1){
+    const e = {
+      id: _eid++,
+      type,
+      stage: 0,
+      sev: sev,
+      ttl: 0,
+      origin,
+      spread: 0,
+      data: {}
+    };
+    state.events.push(e);
+    return e;
+  }
+
+  function eventLabel(type){
+    switch(type){
+      case "OUTAGE": return "Power Outage";
+      case "RIOT": return "Civil Riot";
+      case "OUTBREAK": return "Disease Outbreak";
+      default: return "Event";
+    }
+  }
+
+  // ---------- Simulation: Tick Pipeline ----------
+  function simTick(state){
+    // 0) input already applied directly by UI
+
+    // 1) modifiers
+    const mods = resolveMods(state);
+
+    // 2) base production totals
+    let powerCap = 0, powerUsed = 0;
+    let upkeep = 0;
+    let popCap = 0, popGrowth = 0;
+    let workforceDemand = 0;
+    let creditsRate = 0;
+    let pressureBase = 0;
+    let envDelta = 0;
+
+    let heal = 0, suppress = 0, throughput = 0;
+
+    for (let y=0;y<state.H;y++){
+      for (let x=0;x<state.W;x++){
+        const c = state.grid[y][x];
+        if (c.t === TILE.EMPTY) continue;
+        const lvl = clamp(c.lvl, 1, 3) - 1;
+        const st = DISTRICT_STATS[c.t]?.[lvl];
+        if (!st) continue;
+
+        // damage / disabled flags reduce output
+        const disabled = !!c.flags.disabled;
+        const healthMul = clamp(c.hp, 0, 1);
+        const outMul = disabled ? 0 : healthMul;
+
+        upkeep += (st.upkeep || 0) * mods.upkeep;
+
+        pressureBase += (st.pressure || 0);
+
+        envDelta += (st.env || 0) * mods.envDamage;
+
+        if (st.powerGen) powerCap += st.powerGen * mods.powerGen * outMul;
+        if (st.powerUse) powerUsed += st.powerUse;
+
+        if (c.t === TILE.RES){
+          popCap += st.popCap * outMul;
+          popGrowth += st.popGrowth * mods.popGrowth * outMul;
+        }
+        if (c.t === TILE.IND){
+          workforceDemand += st.workforce * outMul;
+          creditsRate += st.credits * mods.credits * outMul;
+        }
+        if (c.t === TILE.HOS){
+          heal += (st.heal || 0) * outMul;
+        }
+        if (c.t === TILE.POL){
+          suppress += (st.suppress || 0) * outMul;
+        }
+        if (c.t === TILE.HUB){
+          throughput += (st.throughput || 0) * outMul;
+        }
+      }
+    }
+
+    state.powerCapacity = powerCap;
+    state.powerUsed = powerUsed;
+    state.upkeep = upkeep;
+
+    // 3) demand & load
+    const powerLoad = powerCap <= 0 ? 1.0 : powerUsed / powerCap;
+    const workforceAvail = state.population; // 1 pop == 1 workforce unit (simple)
+    const workforceLoad = workforceAvail <= 0 ? 1.0 : workforceDemand / workforceAvail;
+
+    // logistics (simple throughput capacity)
+    // hubs add throughput; industry consumes "logistics"
+    const logisticsCap = Math.max(0.25, throughput);
+    const logisticsUsed = Math.max(0, workforceDemand / 40); // proxy: bigger industry needs more logistics
+    const logisticsLoad = logisticsCap <= 0 ? 1.0 : logisticsUsed / logisticsCap;
+
+    // density index (clustered districts)
+    const dens = densityIndex(state);
+
+    // 4) efficiency & penalties
+    // power efficiency curve: safe under 0.85, then drop
+    let powerEff = 1.0;
+    if (powerLoad > 0.85) powerEff = clamp(1.0 - (powerLoad - 0.85) * 1.25, 0.25, 1.0);
+    if (powerLoad > 1.05) powerEff *= 0.65;
+
+    let workforceEff = 1.0;
+    if (workforceLoad > 0.90) workforceEff = clamp(1.0 - (workforceLoad - 0.90) * 1.10, 0.30, 1.0);
+
+    let logiEff = 1.0;
+    if (logisticsLoad > 0.85) logiEff = clamp(1.0 - (logisticsLoad - 0.85) * 1.20, 0.35, 1.0);
+
+    const eff = powerEff * workforceEff * logiEff;
+
+    // 5) pressure & complexity
+    // pressure is built from load zones + density + base building pressure + recent event memory
+    const dPower = powerLoad <= 0.80 ? 0 :
+                   powerLoad <= 0.95 ? (powerLoad - 0.80) * 8 :
+                                       (0.15*8) + (powerLoad - 0.95) * 18 * mods.powerPressure;
+
+    const dWork = workforceLoad <= 0.80 ? 0 :
+                  workforceLoad <= 1.00 ? (workforceLoad - 0.80) * 6 :
+                                          (0.20*6) + (workforceLoad - 1.00) * 14;
+
+    const dLogi = logisticsLoad <= 0.80 ? 0 :
+                  logisticsLoad <= 1.05 ? (logisticsLoad - 0.80) * 5 :
+                                          (0.25*5) + (logisticsLoad - 1.05) * 12;
+
+    const eventHeat = state.events.length ? Math.min(6, state.events.reduce((a,e)=>a+e.sev,0)) : 0;
+
+    let pressure = (pressureBase * 0.35) + (dens * 8.0) + dPower + dWork + dLogi + eventHeat;
+    pressure *= mods.pressure;
+
+    // complexity: connections + unlocked sectors + built tiles + graph density proxy
+    const builtCount = countBuilt(state);
+    const conn = connectionScore(state); // 0..?
+    let complexity = (builtCount/40) + (conn/30) + (state.sectors.unlocked-1)*0.55;
+    complexity *= state.tune.cx;
+    complexity *= (DIFF[state.difficulty]?.cx ?? 1);
+
+    state.pressure = pressure;
+    state.complexity = complexity;
+
+    // 6) volatility
+    // nonlinear: volatility = (pressure * (1 + complexity)^1.3) mapped to 0..100
+    const steep = mods.volSteep;
+    const rawVol = pressure * Math.pow(1 + complexity, 1.30) * mods.volatility * steep;
+    const vol = clamp(rawVol, 0, 120);
+    const prev = state.volatility;
+    state.volatility = vol;
+    state.volTrend = vol - prev;
+
+    // stability: pulled down by volatility, recovers by services
+    const baseRegen = 0.20 * mods.stabRegen; // per tick
+    const recover = (baseRegen + (heal*0.10) + (suppress*0.07)) * mods.recovery * state.tune.rc;
+    const drain = (vol/120) * 0.75 + (powerLoad>1 ? (powerLoad-1)*1.2 : 0) + (dens*0.25);
+    state.stability = clamp(state.stability + recover - drain, 0, 100);
+
+    // environment: degrades via industry/power + recovers slowly + green policy
+    const envRegen = (0.06 * mods.envRegen) + (heal*0.03);
+    const envDrain = Math.max(0, -envDelta); // envDelta is negative mostly
+    state.environment = clamp(state.environment + envRegen - envDrain*0.10, 0, 100);
+
+    // income: creditsRate depends on eff and stability and env
+    const stabMul = lerp(0.75, 1.05, state.stability/100);
+    const envMul  = lerp(0.85, 1.03, state.environment/100);
+    const netCredits = creditsRate * eff * stabMul * envMul;
+
+    // upkeep drains credits
+    const upkeepDrain = upkeep;
+
+    // population growth limited by capacity
+    const cap = Math.max(0, popCap - state.population);
+    const growth = Math.min(cap, popGrowth * (0.8 + 0.2*stabMul));
+    state.population = Math.max(0, state.population + growth);
+
+    state.credits = Math.max(0, state.credits + netCredits - upkeepDrain);
+
+    // 7) event roll
+    rollEvents(state, mods, {powerLoad, workforceLoad, logisticsLoad, dens});
+
+    // 8) event sim & spread
+    simEvents(state, mods);
+
+    // 9) recovery/decay for events + slow pressure decay already implicit
+    // (events self-manage ttl; city stats already handled)
+
+    // 10) UI snapshot handled elsewhere
+    // 11) victory/failure checks (simple)
+    checkWinLose(state);
+  }
+
+  function rollEvents(state, mods, factors){
+    const rand = rndSeeded(state.seed + state.tick * 1337);
+    const v = state.volatility;
+    const base = clamp((v - 10) / 100, 0, 1); // 0..1
+    // event envelope—strategy heavy: warnings first
+    const pEvent = base * 0.06 * state.tune.ev; // overall chance
+    if (rand() < pEvent){
+      // pick event type by factors
+      const wOutage = clamp((factors.powerLoad - 0.85) * 2.2, 0, 1);
+      const wRiot   = clamp((1 - state.stability/100) * 1.3 + factors.dens*0.6, 0, 1) * mods.riotChance;
+      const wOutbr  = clamp((1 - state.environment/100) * 1.1 + factors.dens*0.7, 0, 1) * mods.outbreakChance;
+
+      const sum = (wOutage + wRiot + wOutbr) + 0.0001;
+      const r = rand() * sum;
+      let type = "OUTAGE";
+      if (r < wOutage) type = "OUTAGE";
+      else if (r < wOutage + wRiot) type = "RIOT";
+      else type = "OUTBREAK";
+
+      const origin = pickHotspot(state, rand, type);
+      if (!origin) return;
+
+      const sev = 1 + Math.floor(rand()*2) + (v>70 ? 1:0);
+      pushEvent(state, type, origin, sev);
+
+      toast(state, eventLabel(type), "Strain detected. Contain it before it spreads.");
+    }
+  }
+
+  function simEvents(state, mods){
+    const spreadMul = mods.spread;
+    for (const e of state.events){
+      e.ttl++;
+
+      // stage progression
+      if (e.stage === 0 && e.ttl > 30) e.stage = 1;     // warning -> active
+      if (e.stage === 1 && e.ttl > 90) e.stage = 2;     // active -> spread
+      if (e.stage === 2 && e.ttl > 170) e.stage = 3;    // spread -> systemic
+      if (e.stage === 3 && e.ttl > 260) e.stage = 4;    // collapse stage (rare)
+
+      // apply local effects
+      applyEventLocal(state, e);
+
+      // spread (network + adjacency)
+      if (e.stage >= 2){
+        const n = Math.ceil(e.sev * (e.stage===2?1:1.4) * spreadMul);
+        for (let i=0;i<n;i++){
+          const target = spreadTarget(state, e);
+          if (!target) continue;
+          infectTileWithEvent(state, e, target);
+        }
+      }
+    }
+
+    // cleanup: resolved events
+    state.events = state.events.filter(e => e.ttl < 360);
+  }
+
+  function applyEventLocal(state, e){
+    const {x,y} = e.origin;
+    const c = state.grid[y]?.[x];
+    if (!c || c.t === TILE.EMPTY) return;
+
+    const sevMul = 0.003 * e.sev * (1 + e.stage*0.35);
+
+    if (e.type === "OUTAGE"){
+      // damage power infrastructure and disable nearby
+      c.hp = clamp(c.hp - sevMul*2.2, 0, 1);
+      if (e.stage >= 1 && Math.random() < 0.06) c.flags.disabled = true;
+    } else if (e.type === "RIOT"){
+      c.hp = clamp(c.hp - sevMul*1.6, 0, 1);
+      if (e.stage >= 1) c.flags.riot = true;
+      if (e.stage >= 2 && Math.random() < 0.03) c.flags.disabled = true;
+    } else if (e.type === "OUTBREAK"){
+      if (e.stage >= 1) c.flags.quarantine = true;
+      // outbreak reduces workforce indirectly via stability hit
+      state.stability = clamp(state.stability - (0.02 * e.sev * (1+e.stage*0.3)), 0, 100);
+    }
+  }
+
+  function infectTileWithEvent(state, e, target){
+    const c = state.grid[target.y]?.[target.x];
+    if (!c || c.t === TILE.EMPTY) return;
+
+    // mark tile with event flags rather than spawning infinite events
+    if (e.type === "OUTAGE"){
+      if (c.t === TILE.PWR || c.t === TILE.HUB || c.t === TILE.IND){
+        c.flags.disabled = true;
+        c.hp = clamp(c.hp - 0.01*e.sev, 0, 1);
+      }
+    } else if (e.type === "RIOT"){
+      c.flags.riot = true;
+      c.hp = clamp(c.hp - 0.008*e.sev, 0, 1);
+    } else if (e.type === "OUTBREAK"){
+      c.flags.quarantine = true;
+      c.hp = clamp(c.hp - 0.004*e.sev, 0, 1);
+    }
+  }
+
+  function spreadTarget(state, e){
+    const rand = rndSeeded(state.seed + e.id * 99991 + e.ttl * 13);
+    const {x,y} = e.origin;
+    // prioritize adjacency; sometimes jump via power/logistics “connections”
+    const candidates = [];
+    for (const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
+      const nx=x+dx, ny=y+dy;
+      if (nx<0||ny<0||nx>=state.W||ny>=state.H) continue;
+      const c = state.grid[ny][nx];
+      if (c.t !== TILE.EMPTY) candidates.push({x:nx,y:ny,w:1.2});
+    }
+    // network-ish jumps: pick random built tile weighted by type
+    for (let i=0;i<3;i++){
+      const p = pickRandomBuilt(state, rand);
+      if (p){
+        const c = state.grid[p.y][p.x];
+        let w = 0.15;
+        if (e.type==="OUTAGE" && (c.t===TILE.PWR||c.t===TILE.HUB)) w=0.35;
+        if (e.type==="RIOT" && (c.t===TILE.RES||c.t===TILE.IND)) w=0.30;
+        if (e.type==="OUTBREAK" && (c.t===TILE.RES)) w=0.34;
+        candidates.push({x:p.x,y:p.y,w});
+      }
+    }
+    if (!candidates.length) return null;
+    const sum = candidates.reduce((a,c)=>a+c.w,0);
+    let r = rand()*sum;
+    for (const c of candidates){
+      r -= c.w;
+      if (r<=0) return {x:c.x,y:c.y};
+    }
+    return {x:candidates[0].x,y:candidates[0].y};
+  }
+
+  function pickHotspot(state, rand, type){
+    // pick a relevant tile
+    const tries = 40;
+    for (let i=0;i<tries;i++){
+      const p = pickRandomBuilt(state, rand);
+      if (!p) return null;
+      const c = state.grid[p.y][p.x];
+      if (type==="OUTAGE" && (c.t===TILE.PWR||c.t===TILE.HUB||c.t===TILE.IND)) return p;
+      if (type==="RIOT" && (c.t===TILE.RES||c.t===TILE.IND)) return p;
+      if (type==="OUTBREAK" && (c.t===TILE.RES)) return p;
+    }
+    return pickRandomBuilt(state, rand);
+  }
+
+  function pickRandomBuilt(state, rand){
+    const built = [];
+    for (let y=0;y<state.H;y++) for (let x=0;x<state.W;x++){
+      if (state.grid[y][x].t !== TILE.EMPTY) built.push({x,y});
+    }
+    if (!built.length) return null;
+    return built[Math.floor(rand()*built.length)];
+  }
+
+  function checkWinLose(state){
+    // Win: reach ring 3 unlocked and keep stability>60 for 90 ticks
+    state._win = state._win || {hold:0, won:false, lost:false};
+    if (state._win.won || state._win.lost) return;
+
+    const goal = state.sectors.unlocked >= 4;
+    if (goal && state.stability >= 60){
+      state._win.hold++;
+      if (state._win.hold === 1) toast(state, "Victory condition", "Hold Stability ≥ 60 to complete the megaproject.");
+      if (state._win.hold > 140){
+        state._win.won = true;
+        toast(state, "MEGAPROJECT COMPLETE", "You stabilized a growing megasystem. Endless mode unlocked.");
+      }
+    } else {
+      state._win.hold = Math.max(0, state._win.hold - 2);
+    }
+
+    // Lose: stability <= 0 for long enough
+    if (state.stability <= 0){
+      state._win.dead = (state._win.dead||0)+1;
+      if (state._win.dead > 80){
+        state._win.lost = true;
+        toast(state, "SYSTEM COLLAPSE", "Your grid failed. Reset run or load a save.");
+        state.paused = true;
+      }
+    } else {
+      state._win.dead = 0;
+    }
+  }
+
+  // ---------- Helpers for pressure/complexity ----------
+  function countBuilt(state){
+    let n=0;
+    for (let y=0;y<state.H;y++) for (let x=0;x<state.W;x++){
+      if (state.grid[y][x].t !== TILE.EMPTY) n++;
+    }
+    return n;
+  }
+
+  function densityIndex(state){
+    // average neighbor occupancy of built tiles
+    let built=0, neigh=0;
+    for (let y=0;y<state.H;y++){
+      for (let x=0;x<state.W;x++){
+        if (state.grid[y][x].t === TILE.EMPTY) continue;
+        built++;
+        let n=0;
+        for (const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
+          const nx=x+dx, ny=y+dy;
+          if (nx<0||ny<0||nx>=state.W||ny>=state.H) continue;
+          if (state.grid[ny][nx].t !== TILE.EMPTY) n++;
+        }
+        neigh += n/4;
+      }
+    }
+    if (!built) return 0;
+    return neigh / built; // 0..1
+  }
+
+  function connectionScore(state){
+    // count adjacent edges between built tiles
+    let edges=0;
+    for (let y=0;y<state.H;y++){
+      for (let x=0;x<state.W;x++){
+        if (state.grid[y][x].t === TILE.EMPTY) continue;
+        if (x+1<state.W && state.grid[y][x+1].t !== TILE.EMPTY) edges++;
+        if (y+1<state.H && state.grid[y+1][x].t !== TILE.EMPTY) edges++;
+      }
+    }
+    return edges;
+  }
+
+  // ---------- Rendering (Canvas) ----------
+  function resizeCanvas(){
+    const r = stage.getBoundingClientRect();
+    const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+    cv.width = Math.floor(r.width * dpr);
+    cv.height = Math.floor(r.height * dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+
+  function draw(state, t){
+    const W = stage.clientWidth;
+    const H = stage.clientHeight;
+
+    // background
+    ctx.clearRect(0,0,W,H);
+    // subtle animated haze
+    const haze = (1 - state.environment/100);
+    const v = state.volatility/120;
+    const pulse = 0.5 + 0.5*Math.sin(t*0.0005 + state.tick*0.01);
+
+    // base fill
+    ctx.fillStyle = "#070A12";
+    ctx.fillRect(0,0,W,H);
+
+    // parallax shift
+    const mx = (pointer.x / W - 0.5);
+    const my = (pointer.y / H - 0.5);
+    const px = mx * 14;
+    const py = my * 10;
+
+    // glow bloom behind city
+    if (state.settings.glow){
+      const g = ctx.createRadialGradient(W*0.5+px, H*0.25+py, 40, W*0.5+px, H*0.25+py, Math.max(W,H)*0.75);
+      g.addColorStop(0, `rgba(118,167,255,${0.12 + v*0.10})`);
+      g.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = g;
+      ctx.fillRect(0,0,W,H);
+    }
+
+    // compute tile size based on grid
+    const pad = 18;
+    const gx = state.W, gy = state.H;
+    const tw = Math.floor((W - pad*2) / gx);
+    const th = Math.floor((H - pad*2) / gy);
+    const tile = Math.max(12, Math.min(tw, th));
+    const ox = Math.floor((W - tile*gx)/2) + px;
+    const oy = Math.floor((H - tile*gy)/2) + py;
+
+    // screen tone shift with volatility
+    if (v > 0.18){
+      ctx.fillStyle = `rgba(255,90,122,${(v-0.18)*0.08})`;
+      ctx.fillRect(0,0,W,H);
+    }
+
+    // grid lines
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "rgba(140,170,255,0.08)";
+    for (let y=0;y<=gy;y++){
+      ctx.beginPath();
+      ctx.moveTo(ox, oy + y*tile);
+      ctx.lineTo(ox + gx*tile, oy + y*tile);
+      ctx.stroke();
+    }
+    for (let x=0;x<=gx;x++){
+      ctx.beginPath();
+      ctx.moveTo(ox + x*tile, oy);
+      ctx.lineTo(ox + x*tile, oy + gy*tile);
+      ctx.stroke();
+    }
+
+    // optional network lines (connections)
+    if (state.settings.lines){
+      ctx.lineWidth = 1;
+      const load = state.powerCapacity<=0 ? 1 : state.powerUsed/state.powerCapacity;
+      const lineA = 0.06 + clamp(load,0,1.3)*0.08 + v*0.06;
+      ctx.strokeStyle = `rgba(179,140,255,${lineA})`;
+      // draw edges between adjacent built tiles
+      for (let y=0;y<gy;y++){
+        for (let x=0;x<gx;x++){
+          if (state.grid[y][x].t === TILE.EMPTY) continue;
+          const cx = ox + x*tile + tile/2;
+          const cy = oy + y*tile + tile/2;
+          if (x+1<gx && state.grid[y][x+1].t !== TILE.EMPTY){
+            const nx = ox + (x+1)*tile + tile/2;
+            ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(nx,cy); ctx.stroke();
+          }
+          if (y+1<gy && state.grid[y+1][x].t !== TILE.EMPTY){
+            const ny = oy + (y+1)*tile + tile/2;
+            ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx,ny); ctx.stroke();
+          }
+        }
+      }
+    }
+
+    // buildings (pseudo-3D)
+    for (let y=0;y<gy;y++){
+      for (let x=0;x<gx;x++){
+        const cell = state.grid[y][x];
+        const sx = ox + x*tile;
+        const sy = oy + y*tile;
+
+        // selection highlight
+        if (state.selected && state.selected.x===x && state.selected.y===y){
+          ctx.fillStyle = "rgba(255,211,107,0.15)";
+          ctx.fillRect(sx+1, sy+1, tile-2, tile-2);
+        }
+
+        if (cell.t === TILE.EMPTY){
+          // faint noise dots
+          if (state.settings.particles && (cell.noise + pulse) % 1 < 0.02){
+            ctx.fillStyle = "rgba(118,167,255,0.10)";
+            ctx.fillRect(sx + (cell.noise*tile), sy + (pulse*tile)%tile, 1, 1);
+          }
+          continue;
+        }
+
+        const lvl = clamp(cell.lvl,1,3);
+        const base = COLORS[cell.t] || COLORS.EMPTY;
+        const hp = clamp(cell.hp,0,1);
+        const flags = cell.flags || {};
+
+        // procedural height: depends on type and level and small noise
+        const baseH = (cell.t===TILE.RES? 10 : cell.t===TILE.IND? 14 : cell.t===TILE.PWR? 16 : cell.t===TILE.HUB? 12 : 11);
+        const h = Math.floor((baseH + lvl*6) * (0.92 + cell.noise*0.18) * (0.55 + hp*0.45));
+
+        // isometric-ish extrusion up-left
+        const ex = Math.floor(tile*0.20);
+        const ey = Math.floor(tile*0.18);
+
+        // face colors
+        const topC = `rgba(${base[0]},${base[1]},${base[2]},${0.90})`;
+        const sideC = `rgba(${Math.floor(base[0]*0.55)},${Math.floor(base[1]*0.55)},${Math.floor(base[2]*0.55)},${0.85})`;
+        const frontC= `rgba(${Math.floor(base[0]*0.70)},${Math.floor(base[1]*0.70)},${Math.floor(base[2]*0.70)},${0.85})`;
+
+        // draw sides
+        ctx.beginPath();
+        ctx.moveTo(sx, sy);
+        ctx.lineTo(sx+ex, sy-ey);
+        ctx.lineTo(sx+ex, sy-ey-h);
+        ctx.lineTo(sx, sy-h);
+        ctx.closePath();
+        ctx.fillStyle = sideC;
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(sx, sy);
+        ctx.lineTo(sx+tile, sy);
+        ctx.lineTo(sx+tile+ex, sy-ey);
+        ctx.lineTo(sx+ex, sy-ey);
+        ctx.closePath();
+        ctx.fillStyle = frontC;
+        ctx.fill();
+
+        // top
+        ctx.beginPath();
+        ctx.moveTo(sx+ex, sy-ey-h);
+        ctx.lineTo(sx+tile+ex, sy-ey-h);
+        ctx.lineTo(sx+tile, sy-h);
+        ctx.lineTo(sx, sy-h);
+        ctx.closePath();
+        ctx.fillStyle = topC;
+        ctx.fill();
+
+        // windows (procedural)
+        const wA = 0.12 + (0.22*(lvl/3)) + (0.18*(1-hp));
+        ctx.fillStyle = `rgba(255,255,255,${wA})`;
+        const wx0 = sx + 3;
+        const wy0 = sy - h + 3;
+        const step = 5;
+        for (let wy=wy0; wy<sy-2; wy+=step){
+          for (let wx=wx0; wx<sx+tile-3; wx+=step){
+            const n = (cell.noise*999 + wx*0.07 + wy*0.11 + state.tick*0.02) % 1;
+            if (n < 0.22) ctx.fillRect(wx, wy, 2, 2);
+          }
+        }
+
+        // flags overlay
+        if (flags.disabled){
+          ctx.fillStyle = "rgba(0,0,0,0.25)";
+          ctx.fillRect(sx+1, sy-h+1, tile-2, h-2);
+        }
+        if (flags.riot){
+          ctx.fillStyle = `rgba(255,90,122,${0.14 + 0.08*pulse})`;
+          ctx.fillRect(sx+1, sy-h+1, tile-2, h-2);
+        }
+        if (flags.quarantine){
+          ctx.strokeStyle = `rgba(107,230,255,${0.28 + 0.10*pulse})`;
+          ctx.lineWidth = 2;
+          ctx.strokeRect(sx+2, sy-h+2, tile-4, h-4);
+        }
+
+        // glow
+        if (state.settings.glow){
+          const ga = 0.10 + lvl*0.04 + v*0.08;
+          const g = ctx.createRadialGradient(sx+tile/2, sy-h+tile/2, 3, sx+tile/2, sy-h+tile/2, tile*1.8);
+          g.addColorStop(0, `rgba(${base[0]},${base[1]},${base[2]},${ga})`);
+          g.addColorStop(1, "rgba(0,0,0,0)");
+          ctx.fillStyle = g;
+          ctx.fillRect(sx-tile, sy-h-tile, tile*3, tile*3);
+        }
+
+        // heatmap overlay (pressure proxy)
+        if (state.settings.heat){
+          const p = localPressureProxy(state, x,y);
+          ctx.fillStyle = `rgba(255,90,122,${clamp(p,0,1)*0.22})`;
+          ctx.fillRect(sx+1, sy+1, tile-2, tile-2);
+        }
+      }
+    }
+
+    // subtle scanlines (premium feel, cheap cost)
+    ctx.fillStyle = `rgba(0,0,0,${0.10 + haze*0.08})`;
+    for (let y=0;y<H;y+=3){
+      ctx.fillRect(0,y,W,1);
+    }
+
+    // tooltip-like inspector on right click/long press
+    if (inspector.show){
+      drawInspector(state, ox, oy, tile);
+    }
+  }
+
+  function localPressureProxy(state, x,y){
+    const c = state.grid[y][x];
+    if (c.t === TILE.EMPTY) return 0;
+    const lvl = clamp(c.lvl,1,3)-1;
+    const st = DISTRICT_STATS[c.t]?.[lvl];
+    const base = (st?.pressure ?? 0.2);
+    const neigh = [];
+    for (const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
+      const nx=x+dx, ny=y+dy;
+      if (nx<0||ny<0||nx>=state.W||ny>=state.H) continue;
+      if (state.grid[ny][nx].t !== TILE.EMPTY) neigh.push(1);
+    }
+    return clamp((base*0.6 + (neigh.length/4)*0.8 + (1-state.stability/100)*0.4), 0, 1);
+  }
+
+  const pointer = {x:0,y:0, down:false};
+  const inspector = {show:false, x:0,y:0, text:""};
+
+  function drawInspector(state, ox, oy, tile){
+    const pad = 10;
+    const w = 270, h = 140;
+    const x = clamp(pointer.x + 14, pad, stage.clientWidth - w - pad);
+    const y = clamp(pointer.y + 14, pad, stage.clientHeight - h - pad);
+    ctx.save();
+    ctx.fillStyle = "rgba(0,0,0,0.55)";
+    ctx.strokeStyle = "rgba(140,170,255,0.16)";
+    roundRect(ctx, x, y, w, h, 14);
+    ctx.fill(); ctx.stroke();
+
+    ctx.fillStyle = "rgba(255,255,255,0.95)";
+    ctx.font = "12px system-ui";
+    const lines = inspector.text.split("\n");
+    let ty = y + 16;
+    for (const ln of lines){
+      ctx.fillText(ln, x + 12, ty);
+      ty += 16;
+    }
+    ctx.restore();
+  }
+
+  function roundRect(c,x,y,w,h,r){
+    c.beginPath();
+    c.moveTo(x+r,y);
+    c.arcTo(x+w,y,x+w,y+h,r);
+    c.arcTo(x+w,y+h,x,y+h,r);
+    c.arcTo(x,y+h,x,y,r);
+    c.arcTo(x,y,x+w,y,r);
+    c.closePath();
+  }
+
+  // ---------- Input / Building ----------
+  function tileFromPointer(state, px, py){
+    const W = stage.clientWidth, H = stage.clientHeight;
+    const pad = 18;
+    const tile = Math.max(12, Math.min(Math.floor((W - pad*2)/state.W), Math.floor((H - pad*2)/state.H)));
+    const ox = Math.floor((W - tile*state.W)/2);
+    const oy = Math.floor((H - tile*state.H)/2);
+    const x = Math.floor((px - ox)/tile);
+    const y = Math.floor((py - oy)/tile);
+    if (x<0||y<0||x>=state.W||y>=state.H) return null;
+    return {x,y};
+  }
+
+  function canBuild(state, type, lvl=1){
+    if (type === TILE.EMPTY) return false;
+    const st = DISTRICT_STATS[type]?.[lvl-1];
+    if (!st) return false;
+    return state.credits >= st.cost;
+  }
+
+  function buildAt(state, x, y, type){
+    const c = state.grid[y][x];
+    if (c.t !== TILE.EMPTY){
+      // selecting existing
+      state.selected = {x,y};
+      return;
+    }
+    const st = DISTRICT_STATS[type]?.[0];
+    if (!st) return;
+    if (state.credits < st.cost){
+      toast(state, "Not enough credits", "Build industry or stabilize for more income.");
+      return;
+    }
+    state.credits -= st.cost;
+    state.grid[y][x] = {t:type, lvl:1, hp:1.0, flags:{}, noise:c.noise};
+    state.selected = {x,y};
+    toast(state, "Placed", `${TOOL_LABEL[type]} built.`);
+  }
+
+  function upgradeSelected(state){
+    if (!state.selected) return toast(state, "No selection", "Select a tile to upgrade.");
+    const {x,y} = state.selected;
+    const c = state.grid[y][x];
+    if (c.t === TILE.EMPTY) return;
+    if (c.lvl >= 3) return toast(state, "Max level", "This district is already level 3.");
+    const next = c.lvl + 1;
+    const st = DISTRICT_STATS[c.t]?.[next-1];
+    if (!st) return;
+    if (state.credits < st.cost) return toast(state, "Not enough credits", "Need more credits to upgrade.");
+    state.credits -= st.cost;
+    c.lvl = next;
+    c.hp = clamp(c.hp + 0.10, 0, 1);
+    toast(state, "Upgraded", `${TOOL_LABEL[c.t]} → Level ${c.lvl}`);
+  }
+
+  function bulldozeSelected(state){
+    if (!state.selected) return toast(state, "No selection", "Select a tile to bulldoze.");
+    const {x,y} = state.selected;
+    const c = state.grid[y][x];
+    if (c.t === TILE.EMPTY) return;
+    state.grid[y][x] = {t:TILE.EMPTY, lvl:0, hp:1.0, flags:{}, noise:c.noise};
+    state.selected = null;
+    toast(state, "Bulldozed", "Tile cleared. Remember: removing infrastructure can spike load elsewhere.");
+  }
+
+  // ---------- Sector unlock ----------
+  function unlockNextSector(state){
+    // Each unlock expands grid by a ring (adds border)
+    const price = 900 + state.sectors.unlocked*520;
+    if (state.credits < price) return toast(state, "Need credits", `Unlock cost: ${fmt(price)}¢`);
+    state.credits -= price;
+
+    const offered = offerSectors(state);
+    // choose one by UI: quick modal via toast + auto-pick if user doesn't open policies (keep it simple)
+    // We'll implement a quick choose via confirm-like buttons in Policies overlay for now.
+    // For now: auto-pick first (best for flow) but show what happened.
+    const pick = offered[0];
+    state.sectors.list.push({id:pick.id, name:pick.name, mods:pick.mods});
+    state.sectors.unlocked++;
+
+    expandGridRing(state);
+    toast(state, "Sector Unlocked", `${pick.name} added. Complexity increased.`);
+  }
+
+  function expandGridRing(state){
+    // add 2 to width and height (one border each side)
+    const old = state.grid;
+    const nW = state.W + 2;
+    const nH = state.H + 2;
+    const rand = rndSeeded(state.seed + state.sectors.unlocked*777);
+    const ng = [];
+    for (let y=0;y<nH;y++){
+      const row = [];
+      for (let x=0;x<nW;x++){
+        const srcX = x-1, srcY = y-1;
+        if (srcX>=0 && srcY>=0 && srcX<state.W && srcY<state.H){
+          row.push(old[srcY][srcX]);
+        } else {
+          row.push({t:TILE.EMPTY, lvl:0, hp:1.0, flags:{}, noise: rand()});
+        }
+      }
+      ng.push(row);
+    }
+    state.grid = ng;
+    state.W = nW;
+    state.H = nH;
+  }
+
+  // ---------- Save / Load / Export / Import ----------
+  function checksum(str){
+    // light checksum
+    let h=2166136261;
+    for (let i=0;i<str.length;i++){
+      h ^= str.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return (h>>>0).toString(16);
+  }
+
+  function serialize(state){
+    const safe = structuredClone(state);
+    delete safe._rt;
+    // don't export inspector/pointer
+    const json = JSON.stringify({meta:{ver:SAVE_VER, ts:Date.now()}, state:safe});
+    return {json, sum: checksum(json)};
+  }
+
+  function saveLocal(state, slot="auto"){
+    const pack = serialize(state);
+    const all = JSON.parse(localStorage.getItem(SAVE_KEY) || "{}");
+    all[slot] = {sum: pack.sum, json: pack.json};
+    localStorage.setItem(SAVE_KEY, JSON.stringify(all));
+    state._rt.lastAutosaveAt = now();
+  }
+
+  function loadLocal(slot="auto"){
+    const all = JSON.parse(localStorage.getItem(SAVE_KEY) || "{}");
+    const item = all[slot];
+    if (!item) return null;
+    if (checksum(item.json) !== item.sum) return null;
+    const parsed = JSON.parse(item.json);
+    return parsed.state;
+  }
+
+  function applyLoadedState(target, loaded){
+    // keep runtime _rt
+    const rt = target._rt;
+    Object.keys(target).forEach(k => delete target[k]);
+    Object.assign(target, loaded);
+    target._rt = rt || { lastAutosaveAt:0, toastUntil:0, toast:null, audio:null };
+  }
+
+  // ---------- Procedural Audio (no files) ----------
+  function ensureAudio(state){
+    if (!state.settings.sound) return null;
+    if (state._rt.audio) return state._rt.audio;
+    try{
+      const ac = new (window.AudioContext || window.webkitAudioContext)();
+      const master = ac.createGain();
+      master.gain.value = 0.18;
+      master.connect(ac.destination);
+
+      // base drone
+      const osc = ac.createOscillator();
+      osc.type = "sawtooth";
+      const g1 = ac.createGain();
+      g1.gain.value = 0.02;
+      osc.connect(g1); g1.connect(master);
+      osc.frequency.value = 64;
+
+      // sub pulse
+      const sub = ac.createOscillator();
+      sub.type = "sine";
+      const g2 = ac.createGain();
+      g2.gain.value = 0.00;
+      sub.connect(g2); g2.connect(master);
+      sub.frequency.value = 42;
+
+      // noise for crisis texture
+      const bufSize = 2 * ac.sampleRate;
+      const noiseBuf = ac.createBuffer(1, bufSize, ac.sampleRate);
+      const data = noiseBuf.getChannelData(0);
+      for (let i=0;i<bufSize;i++) data[i] = (Math.random()*2-1) * 0.35;
+      const noise = ac.createBufferSource();
+      noise.buffer = noiseBuf;
+      noise.loop = true;
+      const g3 = ac.createGain();
+      g3.gain.value = 0.0;
+      noise.connect(g3); g3.connect(master);
+
+      osc.start();
+      sub.start();
+      noise.start();
+
+      state._rt.audio = {ac, master, osc, sub, g1, g2, g3};
+      return state._rt.audio;
+    }catch(e){
+      return null;
+    }
+  }
+
+  function updateAudio(state){
+    if (!state.settings.sound) return;
+    const a = ensureAudio(state);
+    if (!a) return;
+    // if suspended, try resume on interaction elsewhere
+    const v = clamp(state.volatility/120, 0, 1);
+    const stab = clamp(state.stability/100, 0, 1);
+
+    // drone pitch shifts gently with complexity
+    const cx = clamp(state.complexity/10, 0, 1);
+    a.osc.frequency.setTargetAtTime(56 + cx*20 + v*14, a.ac.currentTime, 0.05);
+
+    // base drone gain
+    a.g1.gain.setTargetAtTime(0.018 + v*0.028, a.ac.currentTime, 0.06);
+
+    // sub pulse rises with danger
+    a.g2.gain.setTargetAtTime(Math.max(0, (v-0.20))*0.12, a.ac.currentTime, 0.06);
+    a.sub.frequency.setTargetAtTime(36 + v*18, a.ac.currentTime, 0.06);
+
+    // noise appears during low stability
+    const crisis = Math.max(0, (0.65 - stab)) * 0.18 + Math.max(0, v-0.55)*0.14;
+    a.g3.gain.setTargetAtTime(clamp(crisis,0,0.18), a.ac.currentTime, 0.07);
+  }
+
+  // ---------- Formatting ----------
+  function fmt(n){
+    if (!isFinite(n)) return "0";
+    if (n >= 1e6) return (n/1e6).toFixed(2) + "M";
+    if (n >= 1e3) return Math.floor(n).toLocaleString();
+    return n.toFixed(0);
+  }
+
+  function descVol(v){
+    if (v < 12) return "stable";
+    if (v < 28) return "warming";
+    if (v < 55) return "volatile";
+    if (v < 80) return "critical";
+    return "edge of collapse";
+  }
+
+  function descCx(cx){
+    if (cx < 1) return "low";
+    if (cx < 2.3) return "growing";
+    if (cx < 4) return "dense";
+    if (cx < 6) return "hyperlinked";
+    return "mega-system";
+  }
+
+  function descPr(p){
+    if (p < 12) return "low";
+    if (p < 24) return "rising";
+    if (p < 40) return "high";
+    if (p < 60) return "danger";
+    return "overload";
+  }
+
+  // ---------- UI update ----------
+  function updateUI(state){
+    ui.tCredits.textContent = fmt(state.credits) + "¢";
+    const p = state.powerCapacity<=0 ? 0 : clamp(state.powerUsed/state.powerCapacity, 0, 1.2);
+    ui.tPower.textContent = `${fmt(state.powerUsed)} / ${fmt(state.powerCapacity)}`;
+    ui.tPop.textContent = fmt(state.population);
+    ui.tStab.textContent = state.stability.toFixed(0) + "%";
+    ui.tEnv.textContent = state.environment.toFixed(0) + "%";
+
+    ui.mCredits.style.width = clamp(state.credits/5000, 0, 1)*100 + "%";
+    ui.mPower.style.width = clamp(p, 0, 1)*100 + "%";
+    ui.mPop.style.width = clamp(state.population/250, 0, 1)*100 + "%";
+    ui.mStab.style.width = clamp(state.stability/100, 0, 1)*100 + "%";
+    ui.mEnv.style.width = clamp(state.environment/100, 0, 1)*100 + "%";
+
+    ui.kVol.textContent = state.volatility.toFixed(2);
+    ui.kVolSub.textContent = descVol(state.volatility);
+    ui.kCx.textContent = state.complexity.toFixed(2);
+    ui.kCxSub.textContent = descCx(state.complexity);
+    ui.kPr.textContent = state.pressure.toFixed(2);
+    ui.kPrSub.textContent = descPr(state.pressure);
+
+    ui.kTick.textContent = String(state.tick);
+    ui.kSpeed.textContent = state.paused ? "paused" : (state.speed+"x");
+
+    ui.modeTxt.textContent = TOOL_LABEL[state.tool] || state.tool;
+    ui.selTxt.textContent = state.selected ? `${state.selected.x},${state.selected.y}` : "None";
+
+    // toast visibility
+    if (state._rt.toastUntil && now() > state._rt.toastUntil){
+      ui.toast.classList.remove("show");
+    }
+
+    // dev badge
+    ui.devBadge.classList.toggle("show", ui.overlays.dev.classList.contains("show"));
+  }
+
+  // ---------- Inspector ----------
+  function showInspector(state, x,y){
+    const c = state.grid[y][x];
+    const t = c.t;
+    if (t === TILE.EMPTY){
+      inspector.text = `Tile ${x},${y}\n(empty)\nStability: ${state.stability.toFixed(0)}%`;
+    } else {
+      const lvl = c.lvl;
+      const hp = (c.hp*100).toFixed(0);
+      const flags = Object.keys(c.flags).filter(k=>c.flags[k]).join(", ") || "none";
+      inspector.text =
+        `Tile ${x},${y}\n${TOOL_LABEL[t]} (L${lvl})\nHP: ${hp}%\nFlags: ${flags}\nPower: ${fmt(state.powerUsed)}/${fmt(state.powerCapacity)}`;
+    }
+    inspector.show = true;
+    setTimeout(()=> inspector.show=false, 1600);
+  }
+
+  // ---------- Wiring Buttons ----------
+  function openOverlay(id){
+    ui.overlays[id].classList.add("show");
+  }
+  function closeOverlay(id){
+    ui.overlays[id].classList.remove("show");
+  }
+  document.querySelectorAll("[data-close]").forEach(b=>{
+    b.addEventListener("click", () => closeOverlay(b.getAttribute("data-close")));
+  });
+
+  el("btnHelp").onclick = () => openOverlay("help");
+  el("btnPolicies").onclick = () => { renderPolicies(state); openOverlay("policies"); };
+  el("btnSettings").onclick = () => { syncSettingsUI(state); openOverlay("settings"); };
+
+  el("btnUpgrade").onclick = () => upgradeSelected(state);
+  el("btnBulldoze").onclick = () => bulldozeSelected(state);
+
+  el("btnUnlock").onclick = () => unlockNextSector(state);
+
+  el("btnSave").onclick = () => { saveLocal(state, "manual1"); toast(state,"Saved","Saved to Manual Slot 1."); };
+  el("btnLoad").onclick = () => {
+    const loaded = loadLocal("manual1");
+    if (!loaded) return toast(state,"Load failed","No valid save in Manual Slot 1.");
+    applyLoadedState(state, loaded);
+    toast(state,"Loaded","Manual Slot 1 loaded.");
+  };
+
+  el("btnExport").onclick = () => {
+    const pack = serialize(state);
+    ui.exportBox.value = pack.json;
+    openOverlay("export");
+  };
+  el("btnCopyExport").onclick = async () => {
+    try{ await navigator.clipboard.writeText(ui.exportBox.value); toast(state,"Copied","Save JSON copied."); }
+    catch{ toast(state,"Copy failed","Select text and copy manually."); }
+  };
+
+  el("btnImport").onclick = () => { ui.importBox.value=""; openOverlay("import"); };
+  el("btnDoImport").onclick = () => {
+    try{
+      const parsed = JSON.parse(ui.importBox.value.trim());
+      if (!parsed?.state) throw new Error("bad format");
+      applyLoadedState(state, parsed.state);
+      closeOverlay("import");
+      toast(state,"Imported","Save imported successfully.");
+    }catch(e){
+      toast(state,"Import failed","Invalid JSON.");
+    }
+  };
+
+  // speed controls
+  const speedBtns = [
+    {id:"bSpeed1", v:1},
+    {id:"bSpeed2", v:2},
+    {id:"bSpeed4", v:4},
+  ];
+  speedBtns.forEach(s=>{
+    el(s.id).onclick = () => {
+      state.paused = false;
+      state.speed = s.v;
+      updateSpeedButtons();
+    };
+  });
+  el("bPause").onclick = () => {
+    state.paused = !state.paused;
+    updateSpeedButtons();
+  };
+
+  function updateSpeedButtons(){
+    el("bPause").classList.toggle("good", state.paused);
+    for (const s of speedBtns){
+      const b = el(s.id);
+      b.classList.toggle("good", !state.paused && state.speed===s.v);
+      b.classList.toggle("ghost", state.paused || state.speed!==s.v);
+    }
+  }
+
+  // tool buttons
+  document.querySelectorAll("[data-tool]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      state.tool = btn.getAttribute("data-tool");
+      ui.modeTxt.textContent = TOOL_LABEL[state.tool];
+    });
+  });
+
+  // settings wiring
+  function syncSettingsUI(state){
+    ui.gGlow.checked = state.settings.glow;
+    ui.gLines.checked = state.settings.lines;
+    ui.gParticles.checked = state.settings.particles;
+    ui.gHeat.checked = state.settings.heat;
+    ui.difficulty.value = String(state.difficulty);
+    ui.soundOn.checked = state.settings.sound;
+    ui.autosaveOn.checked = state.settings.autosave;
+  }
+  ui.gGlow.onchange = () => state.settings.glow = ui.gGlow.checked;
+  ui.gLines.onchange = () => state.settings.lines = ui.gLines.checked;
+  ui.gParticles.onchange = () => state.settings.particles = ui.gParticles.checked;
+  ui.gHeat.onchange = () => state.settings.heat = ui.gHeat.checked;
+  ui.difficulty.onchange = () => {
+    state.difficulty = parseInt(ui.difficulty.value,10) || 0;
+    toast(state,"Difficulty set", DIFF[state.difficulty].name);
+  };
+  ui.soundOn.onchange = () => state.settings.sound = ui.soundOn.checked;
+  ui.autosaveOn.onchange = () => state.settings.autosave = ui.autosaveOn.checked;
+
+  ui.btnResetRun.onclick = () => {
+    const seed = state.seed;
+    const fresh = freshState(seed);
+    // keep settings
+    fresh.settings = structuredClone(state.settings);
+    applyLoadedState(state, fresh);
+    toast(state,"Reset","Run reset.");
+    closeOverlay("settings");
+  };
+  ui.btnWipeAll.onclick = () => {
+    localStorage.removeItem(SAVE_KEY);
+    toast(state,"Wiped","All saves deleted.");
+  };
+
+  // dev panel toggles & controls
+  function toggleDev(){
+    const showing = ui.overlays.dev.classList.contains("show");
+    if (showing) closeOverlay("dev"); else openOverlay("dev");
+  }
+  document.addEventListener("keydown", (e)=>{
+    if (e.ctrlKey && e.shiftKey && (e.key==="D" || e.key==="d")){
+      e.preventDefault();
+      toggleDev();
+    }
+  });
+
+  el("devAddCredits").onclick = () => state.credits += 50000;
+  el("devMaxStab").onclick = () => state.stability = 100;
+  el("devHealEnv").onclick = () => state.environment = 100;
+  el("devEventOutage").onclick = () => { const p = pickRandomBuilt(state, rndSeeded(state.seed+state.tick)); if(p) pushEvent(state,"OUTAGE",p,2); };
+  el("devEventRiot").onclick = () => { const p = pickRandomBuilt(state, rndSeeded(state.seed+state.tick+7)); if(p) pushEvent(state,"RIOT",p,2); };
+  el("devEventOutbreak").onclick = () => { const p = pickRandomBuilt(state, rndSeeded(state.seed+state.tick+11)); if(p) pushEvent(state,"OUTBREAK",p,2); };
+  el("devClearEvents").onclick = () => state.events = [];
+  el("devTick1").onclick = () => { simTick(state); state.tick++; };
+
+  ui.rPr.oninput = () => state.tune.pr = parseFloat(ui.rPr.value);
+  ui.rCx.oninput = () => state.tune.cx = parseFloat(ui.rCx.value);
+  ui.rVo.oninput = () => state.tune.vo = parseFloat(ui.rVo.value);
+  ui.rRc.oninput = () => state.tune.rc = parseFloat(ui.rRc.value);
+  ui.rEv.oninput = () => state.tune.ev = parseFloat(ui.rEv.value);
+
+  // canvas input
+  stage.addEventListener("pointermove", (e)=>{
+    const r = stage.getBoundingClientRect();
+    pointer.x = e.clientX - r.left;
+    pointer.y = e.clientY - r.top;
+  });
+
+  stage.addEventListener("pointerdown", async (e)=>{
+    pointer.down = true;
+    // resume audio on first interaction if needed
+    if (state.settings.sound){
+      const a = ensureAudio(state);
+      if (a && a.ac.state === "suspended"){
+        try{ await a.ac.resume(); }catch{}
+      }
+    }
+
+    const r = stage.getBoundingClientRect();
+    const px = e.clientX - r.left;
+    const py = e.clientY - r.top;
+    const txy = tileFromPointer(state, px, py);
+    if (!txy) return;
+    if (e.button === 2){
+      showInspector(state, txy.x, txy.y);
+      return;
+    }
+    buildAt(state, txy.x, txy.y, state.tool);
+  });
+
+  stage.addEventListener("contextmenu", (e)=> e.preventDefault());
+
+  // mobile long press to inspect
+  let pressTimer = null;
+  stage.addEventListener("touchstart", (e)=>{
+    if (!e.touches?.length) return;
+    const r = stage.getBoundingClientRect();
+    const px = e.touches[0].clientX - r.left;
+    const py = e.touches[0].clientY - r.top;
+    const txy = tileFromPointer(state, px, py);
+    if (!txy) return;
+    pressTimer = setTimeout(()=> showInspector(state, txy.x, txy.y), 420);
+  }, {passive:true});
+  stage.addEventListener("touchend", ()=> { if (pressTimer) clearTimeout(pressTimer); pressTimer=null; }, {passive:true});
+
+  // ---------- Main loop ----------
+  let state = boot();
+  renderMarket(state);
+  renderPolicies(state);
+  updateSpeedButtons();
+  resizeCanvas();
+  window.addEventListener("resize", resizeCanvas);
+
+  let acc = 0;
+  const TICK_MS = 140; // base tick
+  let last = now();
+
+  function loop(){
+    const t = now();
+    const dt = t - last;
+    last = t;
+
+    // autosave
+    if (state.settings.autosave && (t - state._rt.lastAutosaveAt) > 45000){
+      saveLocal(state, "auto");
+    }
+
+    // sim
+    if (!state.paused){
+      acc += dt * state.speed;
+      while(acc >= TICK_MS){
+        simTick(state);
+        state.tick++;
+        acc -= TICK_MS;
+      }
+    }
+
+    // dev readout
+    if (ui.overlays.dev.classList.contains("show")){
+      ui.devRead.innerHTML = `
+        <div><b>pressure</b>: ${state.pressure.toFixed(2)}</div>
+        <div><b>complexity</b>: ${state.complexity.toFixed(2)}</div>
+        <div><b>volatility</b>: ${state.volatility.toFixed(2)} (${state.volTrend>=0?"+":""}${state.volTrend.toFixed(2)})</div>
+        <div><b>power</b>: ${fmt(state.powerUsed)} / ${fmt(state.powerCapacity)} (${(state.powerCapacity? (state.powerUsed/state.powerCapacity*100):0).toFixed(0)}%)</div>
+        <div><b>stability</b>: ${state.stability.toFixed(0)}%</div>
+        <div><b>env</b>: ${state.environment.toFixed(0)}%</div>
+        <div><b>events</b>: ${state.events.length}</div>
+      `;
+    }
+
+    // audio
+    updateAudio(state);
+
+    // draw
+    draw(state, t);
+
+    // ui
+    updateUI(state);
+
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+  // open tutorial first time
+  if (!loadLocal("auto") && !loadLocal("manual1")){
+    openOverlay("help");
+  }
+
+  // ---------- Boot / Restore ----------
+  function boot(){
+    const seed = Math.floor(Math.random() * 1e9);
+    const s = freshState(seed);
+    // attempt autosave restore
+    const auto = loadLocal("auto");
+    if (auto){
+      applyLoadedState(s, auto);
+      toast(s, "Restored", "Autosave loaded.");
+    }
+    // safe init market mods
+    s._mods = s._mods || baseMods();
+    return s;
+  }
+})();
+</script>
 </body>
 </html>
