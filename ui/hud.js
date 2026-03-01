@@ -68,3 +68,4 @@ export class HUD {
     w.textContent = `WEATHER: ${storm ? "STORM" : "CLEAR"}`;
   }
 }
+
