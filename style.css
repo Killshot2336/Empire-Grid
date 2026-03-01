@@ -1,3 +1,4 @@
+body { outline: 10px solid lime ! important; }
 :root{
   --bg0:#05070c;
   --bg1:#080d19;
