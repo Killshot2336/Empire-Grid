@@ -1,0 +1,3032 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+<title>Empire Grid</title>
+<style>
+  :root{
+    --bg:#050716;
+    --panel: rgba(12,18,34,.86);
+    --panel2: rgba(10,16,32,.76);
+    --line: rgba(22,32,68,.72);
+    --txt:#e8f0ff;
+    --mut:#9bb0d8;
+    --good:#46f59a;
+    --warn:#ffd36a;
+    --bad:#ff5077;
+    --a1:#6aa7ff;
+    --a2:#b56aff;
+    --shadow: 0 14px 60px rgba(0,0,0,.55);
+    --r:16px;
+    --r2:22px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    color:var(--txt);
+    background:
+      radial-gradient(900px 520px at 10% 10%, rgba(106,167,255,.14), transparent 62%),
+      radial-gradient(900px 640px at 90% 20%, rgba(181,106,255,.12), transparent 60%),
+      radial-gradient(900px 600px at 45% 100%, rgba(70,245,154,.08), transparent 60%),
+      linear-gradient(180deg, #040610, #050815 35%, #050814 100%);
+    overflow-x:hidden;
+  }
+
+  .top{
+    position:sticky; top:0; z-index:10;
+    backdrop-filter: blur(10px);
+    background: rgba(6,9,18,.68);
+    border-bottom:1px solid rgba(22,32,68,.6);
+  }
+  .topIn{
+    max-width:1200px; margin:0 auto;
+    padding:10px 12px;
+    display:flex; gap:10px; align-items:center; justify-content:space-between;
+  }
+  .brand{display:flex; gap:10px; align-items:center}
+  .logo{
+    width:40px; height:40px; border-radius:14px;
+    background:
+      radial-gradient(12px 12px at 30% 30%, rgba(255,255,255,.35), transparent 55%),
+      linear-gradient(135deg, rgba(106,167,255,1), rgba(181,106,255,1));
+    box-shadow: 0 10px 30px rgba(106,167,255,.18);
+    border:1px solid rgba(255,255,255,.08);
+  }
+  .brand h1{
+    margin:0; font-size:13px;
+    letter-spacing:.12em; text-transform:uppercase; line-height:1.1;
+  }
+  .brand .sub{font-size:12px; color:var(--mut); margin-top:2px}
+
+  .tabs{display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end}
+  .tabBtn{
+    border:1px solid var(--line);
+    background: rgba(12,18,34,.82);
+    color:var(--txt);
+    padding:8px 10px;
+    border-radius:14px;
+    font-size:12px;
+    cursor:pointer;
+    user-select:none;
+    transition:.12s transform, .12s background, .12s border;
+  }
+  .tabBtn:active{transform: translateY(1px)}
+  .tabBtn.on{border-color: rgba(106,167,255,.85); background: rgba(106,167,255,.14);}
+
+  .wrap{
+    max-width:1200px; margin:0 auto; padding:12px;
+    display:grid; grid-template-columns: 1.2fr .8fr; gap:12px;
+  }
+  @media (max-width: 980px){ .wrap{grid-template-columns:1fr} }
+
+  .card{
+    background: var(--panel);
+    border:1px solid var(--line);
+    border-radius: var(--r2);
+    box-shadow: var(--shadow);
+    overflow:hidden;
+  }
+  .cardH{
+    padding:12px;
+    border-bottom:1px solid rgba(22,32,68,.55);
+    display:flex; gap:10px; align-items:center; justify-content:space-between;
+    background: linear-gradient(180deg, rgba(255,255,255,.03), transparent);
+  }
+  .cardH .t{font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--mut);}
+  .cardB{padding:12px}
+
+  .row{display:flex; gap:10px; flex-wrap:wrap}
+  .col{flex:1 1 240px}
+
+  .kpi{
+    padding:10px;
+    border:1px solid rgba(22,32,68,.6);
+    border-radius: var(--r);
+    background: var(--panel2);
+  }
+  .kpi .lab{
+    color:var(--mut); font-size:11px; letter-spacing:.08em;
+    text-transform:uppercase; margin-bottom:6px;
+  }
+  .kpi .val{font-size:18px; font-weight:900; letter-spacing:.02em}
+  .kpi .mini{
+    margin-top:6px;
+    color:var(--mut);
+    font-size:12px;
+    display:flex; justify-content:space-between; gap:8px;
+  }
+  .kpi .mini b{color:var(--txt); font-weight:800}
+
+  .btn{
+    border:1px solid rgba(22,32,68,.7);
+    background: rgba(10,16,32,.85);
+    color:var(--txt);
+    padding:10px 10px;
+    border-radius: 14px;
+    cursor:pointer;
+    font-size:12px;
+    user-select:none;
+    transition:.12s transform, .12s background, .12s border;
+    width:100%;
+    text-align:left;
+  }
+  .btn:hover{background: rgba(16,24,50,.85)}
+  .btn:active{transform: translateY(1px)}
+  .btn.good{border-color: rgba(70,245,154,.55)}
+  .btn.warn{border-color: rgba(255,211,106,.55)}
+  .btn.bad{border-color: rgba(255,80,119,.55)}
+  .btn .r{float:right; color:var(--mut); font-weight:800}
+  .btn small{display:block; color:var(--mut); margin-top:5px; line-height:1.25}
+
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+  @media (max-width: 480px){ .grid2{grid-template-columns:1fr} }
+
+  .pillRow{display:flex; gap:8px; flex-wrap:wrap}
+  .pill{
+    padding:6px 8px;
+    border-radius:999px;
+    border:1px solid rgba(22,32,68,.7);
+    background: rgba(10,16,32,.72);
+    font-size:12px;
+    color:var(--mut);
+  }
+  .pill b{color:var(--txt)}
+  .pill.ok{border-color: rgba(70,245,154,.5)}
+  .pill.hot{border-color: rgba(255,211,106,.5)}
+  .pill.dead{border-color: rgba(255,80,119,.5)}
+
+  .log{
+    height:240px;
+    overflow:auto;
+    border:1px solid rgba(22,32,68,.6);
+    border-radius: var(--r);
+    background: rgba(10,16,32,.72);
+    padding:10px;
+    font-size:12px;
+    color:var(--mut);
+    line-height:1.35;
+  }
+  .log .l{margin-bottom:8px}
+  .log .l b{color:var(--txt)}
+
+  .canvasBox{
+    border:1px solid rgba(22,32,68,.6);
+    background: rgba(10,16,32,.65);
+    border-radius: 18px;
+    padding:10px;
+    overflow:hidden;
+  }
+  canvas{width:100%; height:auto; display:block; border-radius:14px}
+
+  .bar{
+    height:10px; border-radius:999px;
+    border:1px solid rgba(22,32,68,.6);
+    background: rgba(6,10,20,.55);
+    overflow:hidden;
+  }
+  .bar > div{
+    height:100%;
+    width:0%;
+    background: linear-gradient(90deg, rgba(106,167,255,.9), rgba(181,106,255,.85));
+  }
+
+  .toast{
+    position:fixed; left:50%; transform: translateX(-50%);
+    bottom:14px;
+    background: rgba(12,18,34,.92);
+    border:1px solid rgba(22,32,68,.75);
+    padding:10px 12px;
+    border-radius: 999px;
+    font-size:12px;
+    color:var(--txt);
+    box-shadow: var(--shadow);
+    display:none;
+    z-index:200;
+    max-width: 92vw;
+    white-space: nowrap;
+    overflow:hidden;
+    text-overflow: ellipsis;
+  }
+
+  .backdrop{
+    position:fixed; inset:0;
+    background: rgba(0,0,0,.55);
+    display:none; align-items:center; justify-content:center;
+    padding:12px;
+    z-index:100;
+  }
+  .modal{
+    width:min(820px, 100%);
+    border-radius: 22px;
+    background: rgba(12,18,34,.95);
+    border:1px solid rgba(22,32,68,.85);
+    box-shadow: 0 30px 90px rgba(0,0,0,.6);
+    overflow:hidden;
+  }
+  .modalH{
+    padding:12px;
+    border-bottom:1px solid rgba(22,32,68,.55);
+    display:flex; justify-content:space-between; align-items:center; gap:10px;
+  }
+  .modalH .t{font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--mut);}
+  .x{
+    cursor:pointer;
+    border:1px solid rgba(22,32,68,.7);
+    background: rgba(10,16,32,.8);
+    color:var(--txt);
+    border-radius: 14px;
+    padding:8px 10px;
+    font-size:12px;
+    user-select:none;
+  }
+  .modalB{padding:12px}
+  .in{
+    width:100%;
+    padding:10px 10px;
+    border-radius:14px;
+    border:1px solid rgba(22,32,68,.7);
+    background: rgba(10,16,32,.75);
+    color:var(--txt);
+    font-size:14px;
+    outline:none;
+  }
+  .mut{color:var(--mut); font-size:12px; line-height:1.35}
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="topIn">
+      <div class="brand">
+        <div class="logo"></div>
+        <div>
+          <h1>Empire Grid V2</h1>
+          <div class="sub">HOLY build • procedural city • offline • single-file</div>
+        </div>
+      </div>
+      <div class="tabs">
+        <button class="tabBtn on" data-tab="city">City</button>
+        <button class="tabBtn" data-tab="build">Build</button>
+        <button class="tabBtn" data-tab="contracts">Contracts</button>
+        <button class="tabBtn" data-tab="wonders">Wonders</button>
+        <button class="tabBtn" data-tab="meta">Meta</button>
+        <button class="tabBtn" data-tab="settings">Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="card">
+      <div class="cardH">
+        <div class="t" id="leftTitle">City</div>
+        <div class="pillRow" id="pills"></div>
+      </div>
+      <div class="cardB" id="leftBody"></div>
+    </div>
+
+    <div class="card">
+      <div class="cardH">
+        <div class="t">Status</div>
+        <div class="mut" id="saveHint">Auto-save on</div>
+      </div>
+      <div class="cardB">
+        <div class="row">
+          <div class="col kpi">
+            <div class="lab">Cash</div>
+            <div class="val" id="k_cash">0</div>
+            <div class="mini"><span>/sec</span><b id="k_cps">0</b></div>
+          </div>
+          <div class="col kpi">
+            <div class="lab">Materials</div>
+            <div class="val" id="k_mat">0</div>
+            <div class="mini"><span>/sec</span><b id="k_mps">0</b></div>
+          </div>
+          <div class="col kpi">
+            <div class="lab">Food</div>
+            <div class="val" id="k_food">0</div>
+            <div class="mini"><span>/sec</span><b id="k_fps">0</b></div>
+          </div>
+        </div>
+
+        <div style="height:10px"></div>
+
+        <div class="row">
+          <div class="col kpi">
+            <div class="lab">Power</div>
+            <div class="val"><span id="k_pow">0</span>/<span id="k_powNeed">0</span></div>
+            <div class="mini"><span>grid</span><b id="k_powState">OK</b></div>
+          </div>
+          <div class="col kpi">
+            <div class="lab">Population</div>
+            <div class="val" id="k_pop">0</div>
+            <div class="mini"><span>jobs</span><b id="k_jobs">0/0</b></div>
+          </div>
+          <div class="col kpi">
+            <div class="lab">Stability</div>
+            <div class="val"><span id="k_stab">100</span>%</div>
+            <div class="mini"><span>risk</span><b id="k_risk">Low</b></div>
+          </div>
+        </div>
+
+        <div style="height:10px"></div>
+
+        <div class="row">
+          <div class="col kpi">
+            <div class="lab">Science</div>
+            <div class="val" id="k_sci">0</div>
+            <div class="mini"><span>/sec</span><b id="k_sps">0</b></div>
+          </div>
+          <div class="col kpi">
+            <div class="lab">Era</div>
+            <div class="val" id="k_era">Dawn</div>
+            <div class="mini"><span>level</span><b id="k_cityLvl">1</b></div>
+          </div>
+          <div class="col kpi">
+            <div class="lab">Legacy</div>
+            <div class="val" id="k_leg">0</div>
+            <div class="mini"><span>boost</span><b id="k_boost">x1.00</b></div>
+          </div>
+        </div>
+
+        <div style="height:10px"></div>
+
+        <div class="grid2">
+          <button class="btn good" id="btn_daily">Daily Shipment <span class="r" id="daily_cd">Ready</span>
+            <small>Free resources. Streak increases rewards.</small>
+          </button>
+          <button class="btn" id="btn_save">Manual Save <span class="r">Ctrl+S</span>
+            <small>Auto-save also runs every ~25s.</small>
+          </button>
+        </div>
+
+        <div style="height:10px"></div>
+
+        <div class="grid2">
+          <button class="btn" id="btn_sound"><b>Sound</b> <span class="r" id="sound_state">Off</span>
+            <small>Procedural audio (no files). Adds “real game” feel.</small>
+          </button>
+          <button class="btn warn" id="btn_tutorial"><b>Show Tutorial</b> <span class="r">60s</span>
+            <small>Fast guided first minute loop.</small>
+          </button>
+        </div>
+
+        <div style="height:10px"></div>
+
+        <div class="log" id="log"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="backdrop" id="bd">
+    <div class="modal">
+      <div class="modalH">
+        <div class="t" id="m_title">Modal</div>
+        <div class="x" id="m_close">Close</div>
+      </div>
+      <div class="modalB" id="m_body"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  // Empire Grid V2 "HOLY"
+  // Single file, offline, procedural visuals, contracts, wonders, secrets, prestige, admin.
+  // Admin: Ctrl+Shift+A → passcode BAKER
+  const KEY = "EMPIRE_GRID_V2_HOLY_SAVE";
+  const VER = 2;
+
+  const $ = (id) => document.getElementById(id);
+  const leftTitle = $("leftTitle");
+  const leftBody = $("leftBody");
+  const pills = $("pills");
+  const logEl = $("log");
+  const toastEl = $("toast");
+  const bd = $("bd");
+  const mTitle = $("m_title");
+  const mBody = $("m_body");
+  const mClose = $("m_close");
+  const tabBtns = Array.from(document.querySelectorAll(".tabBtn"));
+
+  let tab = "city";
+  let toastT = 0;
+
+  // ---- util ----
+  const clamp = (x,a,b)=>Math.max(a,Math.min(b,x));
+  const now = ()=>Date.now();
+  function n(x){
+    if (!isFinite(x)) return "∞";
+    x = Math.max(0, x);
+    if (x < 1000) return Math.floor(x).toString();
+    const u = ["K","M","B","T","Qa","Qi","Sx","Sp","Oc","No","Dc"];
+    let i=-1;
+    while (x >= 1000 && i < u.length-1){ x/=1000; i++; }
+    return (x>=100 ? x.toFixed(0) : x>=10 ? x.toFixed(1) : x.toFixed(2)) + u[i];
+  }
+  function toast(msg){
+    toastEl.textContent = msg;
+    toastEl.style.display = "block";
+    clearTimeout(toastT);
+    toastT = setTimeout(() => toastEl.style.display = "none", 1400);
+  }
+  function say(msg){
+    const t = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    const div = document.createElement("div");
+    div.className = "l";
+    div.innerHTML = `<b>${t}</b> • ${msg}`;
+    logEl.prepend(div);
+    while (logEl.childNodes.length > 110) logEl.removeChild(logEl.lastChild);
+  }
+  function dayIndex(t){
+    const d = new Date(t);
+    return Math.floor(new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()/86400000);
+  }
+
+  // ---- seeded rng (stable worlds) ----
+  function xmur3(str){
+    let h=1779033703 ^ str.length;
+    for (let i=0;i<str.length;i++){
+      h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+      h = (h<<13) | (h>>>19);
+    }
+    return function(){
+      h = Math.imul(h ^ (h>>>16), 2246822507);
+      h = Math.imul(h ^ (h>>>13), 3266489909);
+      return (h ^ (h>>>16)) >>> 0;
+    }
+  }
+  function mulberry32(a){
+    return function(){
+      let t = a += 0x6D2B79F5;
+      t = Math.imul(t ^ (t>>>15), t | 1);
+      t ^= t + Math.imul(t ^ (t>>>7), t | 61);
+      return ((t ^ (t>>>14)) >>> 0) / 4294967296;
+    }
+  }
+  function rngFromSeed(seedStr){
+    const seed = xmur3(seedStr)();
+    return mulberry32(seed);
+  }
+
+  // ---- game data ----
+  const ERA = [
+    {id:"dawn", name:"Dawn", reqSci:0},
+    {id:"industrial", name:"Industrial", reqSci:900},
+    {id:"modern", name:"Modern", reqSci:6500},
+    {id:"future", name:"Future", reqSci:38000},
+  ];
+
+  const TERRAIN = [
+    {id:"plains", name:"Plains",  tag:"PL", bonus:{food:+0.10}},
+    {id:"forest", name:"Forest",  tag:"FR", bonus:{mat:+0.12}},
+    {id:"river",  name:"River",   tag:"RV", bonus:{cash:+0.08, food:+0.08}},
+    {id:"hill",   name:"Hills",   tag:"HL", bonus:{mat:+0.08, sci:+0.06}},
+    {id:"coast",  name:"Coast",   tag:"CS", bonus:{cash:+0.14}},
+    {id:"ruins",  name:"Ruins",   tag:"RN", bonus:{sci:+0.18}, rare:true},
+    {id:"oil",    name:"Oil",     tag:"OL", bonus:{cash:+0.16, mat:+0.10}, rare:true},
+  ];
+
+  const BUILD = {
+    empty: {name:"Empty", kind:"none", era:"dawn"},
+    road:  {name:"Road", kind:"util", era:"dawn", baseCost:{cash:30, mat:10}, powNeed:0, powMake:0, jobs:0, pop:0},
+    house: {name:"Housing", kind:"res", era:"dawn", baseCost:{cash:90, mat:35, food:10}, powNeed:1, powMake:0, jobs:0, pop:12},
+    farm:  {name:"Farm", kind:"food", era:"dawn", baseCost:{cash:110, mat:35}, powNeed:1, powMake:0, jobs:4, pop:0},
+    saw:   {name:"Sawmill", kind:"mat", era:"dawn", baseCost:{cash:160, mat:40}, powNeed:1, powMake:0, jobs:5, pop:0},
+    market:{name:"Market", kind:"cash", era:"dawn", baseCost:{cash:200, mat:55, food:20}, powNeed:1, powMake:0, jobs:5, pop:0},
+
+    factory:{name:"Factory", kind:"ind", era:"industrial", baseCost:{cash:650, mat:230, food:55}, powNeed:5, powMake:0, jobs:14, pop:0},
+    power: {name:"Power Plant", kind:"power", era:"industrial", baseCost:{cash:720, mat:260}, powNeed:0, powMake:16, jobs:8, pop:0},
+    park:  {name:"Park", kind:"civic", era:"industrial", baseCost:{cash:380, mat:70}, powNeed:0, powMake:0, jobs:1, pop:0},
+    police:{name:"Police", kind:"civic", era:"industrial", baseCost:{cash:520, mat:120}, powNeed:2, powMake:0, jobs:6, pop:0},
+    wh:    {name:"Warehouse", kind:"util", era:"industrial", baseCost:{cash:520, mat:150}, powNeed:1, powMake:0, jobs:3, pop:0},
+
+    lab:   {name:"Research Lab", kind:"sci", era:"modern", baseCost:{cash:2200, mat:520, food:110}, powNeed:6, powMake:0, jobs:10, pop:0},
+    port:  {name:"Trade Port", kind:"trade", era:"modern", baseCost:{cash:3200, mat:820, food:200}, powNeed:4, powMake:0, jobs:12, pop:0},
+    hub:   {name:"District Hub", kind:"hub", era:"modern", baseCost:{cash:2600, mat:680, food:160}, powNeed:3, powMake:0, jobs:6, pop:0},
+
+    fusion:{name:"Fusion Core", kind:"power", era:"future", baseCost:{cash:5200, mat:1100}, powNeed:0, powMake:44, jobs:10, pop:0},
+    arc:   {name:"Arcology", kind:"res", era:"future", baseCost:{cash:8800, mat:2200, food:650, sci:900}, powNeed:10, powMake:0, jobs:10, pop:80},
+    nano:  {name:"Nanofab", kind:"mat", era:"future", baseCost:{cash:7200, mat:1600, food:300, sci:600}, powNeed:9, powMake:0, jobs:12, pop:0},
+  };
+
+  // upgrade mutations: at certain levels, player picks a variant.
+  // variants apply stat multipliers (readable, big-feel).
+  const MUTATIONS = {
+    house: [
+      {at:6, options:[
+        {id:"dense", name:"High-Density Blocks", desc:"+35% pop. +10% cash from adjacency.", m:{pop:1.35, cashAdj:1.10}},
+        {id:"gated", name:"Gated Estates", desc:"+15% pop. +20 stability max. -10% crime risk.", m:{pop:1.15, stabCap:+20, crimeDown:0.10}},
+      ]},
+      {at:14, options:[
+        {id:"sky", name:"Skyline Towers", desc:"+70% pop. Needs +2 power.", m:{pop:1.70, powNeed:+2}},
+        {id:"arcseed", name:"Arcology Seed", desc:"+40% pop. +10% science citywide.", m:{pop:1.40, sciCity:0.10}},
+      ]}
+    ],
+    factory: [
+      {at:5, options:[
+        {id:"auto", name:"Automation Lines", desc:"+20% output. -10% jobs need.", m:{out:1.20, jobs:0.90}},
+        {id:"heavy", name:"Heavy Industry", desc:"+35% materials output. +10% pollution risk.", m:{matOut:1.35, stabDrain:+0.06}},
+      ]},
+      {at:12, options:[
+        {id:"nano", name:"Microfoundry", desc:"+25% cash. +20% science.", m:{cashOut:1.25, sciOut:1.20}},
+        {id:"war", name:"Defense Contracts", desc:"+45% cash. Stability -8 cap.", m:{cashOut:1.45, stabCap:-8}},
+      ]}
+    ],
+    power: [
+      {at:6, options:[
+        {id:"solar", name:"Solar Fields", desc:"+12 power. +8% stability gain.", m:{powMake:+12, stabGain:0.08}},
+        {id:"grid", name:"Smart Grid", desc:"+8 power. -8% power need citywide.", m:{powMake:+8, powNeedCity:-0.08}},
+      ]}
+    ],
+    lab: [
+      {at:6, options:[
+        {id:"ai", name:"AI Research", desc:"+25% science. +10% all output.", m:{sciOut:1.25, allCity:0.10}},
+        {id:"bio", name:"Bio Division", desc:"+18% science. +15% food.", m:{sciOut:1.18, foodCity:0.15}},
+      ]}
+    ]
+  };
+
+  const TECH = [
+    {id:"tax", era:"dawn", cost:150, name:"Tax Ledger", desc:"+10% cash.", apply:(s)=>s.perm.cashMul+=0.10},
+    {id:"tools", era:"dawn", cost:220, name:"Steel Tools", desc:"+12% materials.", apply:(s)=>s.perm.matMul+=0.12},
+    {id:"grain", era:"dawn", cost:210, name:"Crop Rotation", desc:"+12% food.", apply:(s)=>s.perm.foodMul+=0.12},
+    {id:"roads", era:"industrial", cost:720, name:"Paved Arteries", desc:"+7% all output.", apply:(s)=>s.perm.allMul+=0.07},
+    {id:"zoning", era:"industrial", cost:920, name:"Zoning Code", desc:"+20 housing pop.", apply:(s)=>s.perm.housePop+=20},
+    {id:"eff", era:"industrial", cost:1100, name:"Efficiency Methods", desc:"-6% power need. +6% all.", apply:(s)=>{s.perm.powNeedMul*=0.94; s.perm.allMul+=0.06}},
+    {id:"media", era:"modern", cost:4200, name:"Public Media", desc:"+18 stability cap. +12% stability gain.", apply:(s)=>{s.perm.stabCap+=18; s.perm.stabGainMul+=0.12}},
+    {id:"logi", era:"modern", cost:5200, name:"Logistics", desc:"+16% trade & market cash.", apply:(s)=>{s.perm.tradeCashMul+=0.16; s.perm.marketCashMul+=0.16}},
+    {id:"aiPlan", era:"future", cost:16000, name:"AI City Planning", desc:"+18% all output.", apply:(s)=>s.perm.allMul+=0.18},
+    {id:"nanoFab", era:"future", cost:19000, name:"Nanofabrication", desc:"+28% materials.", apply:(s)=>s.perm.matMul+=0.28},
+  ];
+
+  const WONDER = [
+    {id:"exchange", era:"industrial", name:"Stock Exchange", desc:"+22% cash. Unlocks faction “Syndicate”.", cost:{cash:24000, mat:12000, food:4000}, perk:(s)=>{s.perm.cashMul+=0.22; s.flags.synd=true}},
+    {id:"hyper", era:"modern", name:"Hyperloop", desc:"+12% all output. +20% contract rewards.", cost:{cash:85000, mat:42000, food:12000, sci:6000}, perk:(s)=>{s.perm.allMul+=0.12; s.perm.contractMul+=0.20}},
+    {id:"aicore", era:"future", name:"AI Core", desc:"+35% science. City runs “smarter”.", cost:{cash:220000, mat:105000, food:35000, sci:38000}, perk:(s)=>{s.perm.sciMul+=0.35; s.perm.powNeedMul*=0.92; s.perm.stabGainMul+=0.12}},
+    {id:"elevator", era:"future", name:"Space Elevator", desc:"+1 legacy per day claim. +20 stability cap.", cost:{cash:420000, mat:220000, food:60000, sci:52000}, perk:(s)=>{s.perm.stabCap+=20; s.flags.legacyDaily=true}},
+  ];
+
+  const FACTIONS = [
+    {id:"union", name:"The Union", vibe:"Workforce + stability", rewards:{food:1.2, stab:1.1}},
+    {id:"guild", name:"The Guild", vibe:"Materials + building", rewards:{mat:1.25}},
+    {id:"council", name:"City Council", vibe:"Cash + science", rewards:{cash:1.25, sci:1.1}},
+    {id:"synd", name:"Syndicate", vibe:"High cash, higher risk", requiresFlag:"synd", rewards:{cash:1.55}},
+  ];
+
+  const SECRET_LIST = [
+    {id:"baker", name:"Baker Protocol", desc:"Type BAKER anywhere.", reward:"cash"},
+    {id:"empire", name:"Empire Signal", desc:"Type EMPIRE anywhere.", reward:"mat"},
+    {id:"perfect", name:"Perfect Week", desc:"7-day streak.", reward:"legacy"},
+    {id:"blackout", name:"Blackout Survivor", desc:"Stay above 60 stability for 120s while power strained.", reward:"sci"},
+    {id:"grid", name:"Grid Pattern", desc:"Build a 2x2 square of Roads.", reward:"cash"},
+  ];
+
+  // ---- audio (procedural) ----
+  const Audio = (() => {
+    let ctx=null, on=false, master=null;
+    function ensure(){
+      if (ctx) return;
+      ctx = new (window.AudioContext || window.webkitAudioContext)();
+      master = ctx.createGain();
+      master.gain.value = 0.15;
+      master.connect(ctx.destination);
+    }
+    function blip(freq=320, dur=0.06, type="sine", gain=1){
+      if (!on) return;
+      ensure();
+      if (ctx.state === "suspended") ctx.resume();
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = type;
+      o.frequency.value = freq;
+      g.gain.value = 0.0001;
+      o.connect(g);
+      g.connect(master);
+      const t0 = ctx.currentTime;
+      g.gain.exponentialRampToValueAtTime(0.12*gain, t0 + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      o.start(t0);
+      o.stop(t0 + dur + 0.01);
+    }
+    function click(){ blip(420, 0.05, "triangle", 0.9); }
+    function build(){ blip(220, 0.09, "square", 0.9); setTimeout(()=>blip(520,0.05,"triangle",0.8), 40); }
+    function level(){ blip(160, 0.10, "sawtooth", 0.8); setTimeout(()=>blip(320,0.10,"sawtooth",0.7), 80); setTimeout(()=>blip(640,0.08,"triangle",0.8), 160); }
+    function danger(){ blip(90, 0.14, "square", 0.7); }
+    return {
+      toggle:()=>{ on=!on; if(on) ensure(); return on; },
+      state:()=>on,
+      click, build, level, danger,
+    };
+  })();
+
+  // ---- state ----
+  function defaultState(){
+    const size = 10;
+    const seed = "WORLD-" + Math.floor(Math.random()*1e9).toString(36).toUpperCase();
+    const R = rngFromSeed(seed);
+
+    const tiles=[];
+    for (let y=0;y<size;y++){
+      for (let x=0;x<size;x++){
+        // weighted terrain
+        let t = "plains";
+        const r = R();
+        if (r < 0.18) t="forest";
+        else if (r < 0.29) t="river";
+        else if (r < 0.40) t="hill";
+        else if (r < 0.48) t="coast";
+        else if (r < 0.50) t="oil";   // rare
+        else if (r < 0.52) t="ruins"; // rare
+        tiles.push({
+          own:false,
+          fog:true,
+          terrain:t,
+          b:"empty",
+          lv:1,
+          mut:{}, // chosen mutations
+          anim:0,
+          fx:[] // sparkles/traffic
+        });
+      }
+    }
+
+    // start: center 2 tiles owned, one housing one farm
+    const cx = Math.floor(size/2), cy = Math.floor(size/2);
+    const i0 = cy*size+cx;
+    const i1 = cy*size+(cx-1);
+    tiles[i0].own=true; tiles[i0].fog=false; tiles[i0].b="house";
+    tiles[i1].own=true; tiles[i1].fog=false; tiles[i1].b="farm";
+
+    // reveal neighbors fog
+    function revealAround(idx){
+      const z=size;
+      const x=idx%z, y=Math.floor(idx/z);
+      const dirs=[[0,0],[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]];
+      for (const [dx,dy] of dirs){
+        const nx=x+dx, ny=y+dy;
+        if(nx<0||ny<0||nx>=z||ny>=z) continue;
+        tiles[ny*z+nx].fog=false;
+      }
+    }
+    revealAround(i0); revealAround(i1);
+
+    return {
+      ver: VER,
+      seed,
+      size,
+      tiles,
+      sel: i0,
+
+      // resources
+      cash: 220,
+      mat: 80,
+      food: 55,
+      sci: 0,
+
+      // stats
+      stab: 92,
+      cityLvl: 1,
+      xp: 0,
+      xpNeed: 120,
+      eraIdx: 0,
+
+      // snapshots (computed)
+      pow: 0,
+      powNeed: 0,
+      pop: 0,
+      jobsNeed: 0,
+      jobsAvail: 0,
+
+      // storage
+      store: {cashCap:3000, matCap:1600, foodCap:1200, sciCap:24000},
+
+      // systems
+      techDone: {},
+      wonder: { active:null, prog:{}, done:{} }, // prog[id] is partial paid
+      contract: { active:null, nextAt:0, streak:0, done:0 }, // rotating jobs
+      daily: { lastDay:-1, streak:0 },
+
+      // meta
+      meta: { legacy:0, eraResets:0, spent:0, perks:{all:0,cash:0,mat:0,food:0,sci:0,stab:0,pow:0} },
+
+      // permanent buffs
+      perm: {
+        allMul:0, cashMul:0, matMul:0, foodMul:0, sciMul:0,
+        stabCap:0, stabGainMul:0,
+        powNeedMul:1,
+        marketCashMul:0, tradeCashMul:0,
+        housePop:0,
+        contractMul:0,
+      },
+
+      // flags
+      flags: { synd:false, legacyDaily:false },
+
+      // secrets / achievements
+      secrets: { keySeq:"", found:{} },
+      ach: {},
+
+      // tutorial
+      tutorial: { on:true, step:0, until:0 },
+
+      // settings
+      set: { autosave:true },
+
+      // timers
+      t: { last: now(), lastSave: now(), blackoutT:0 },
+    };
+  }
+
+  let s = defaultState();
+
+  // ---- save/load ----
+  function merge(base, inc){
+    for (const k in inc){
+      if (inc[k] && typeof inc[k] === "object" && !Array.isArray(inc[k])){
+        if (!base[k]) base[k] = {};
+        merge(base[k], inc[k]);
+      }else base[k] = inc[k];
+    }
+    return base;
+  }
+  function save(){
+    try{
+      s.t.lastSave = now();
+      localStorage.setItem(KEY, JSON.stringify(s));
+      $("saveHint").textContent = "Saved";
+      setTimeout(() => $("saveHint").textContent = s.set.autosave ? "Auto-save on" : "Auto-save off", 900);
+    }catch(e){
+      toast("Save failed (storage blocked)");
+    }
+  }
+  function load(){
+    try{
+      const raw = localStorage.getItem(KEY);
+      if (!raw) return false;
+      const obj = JSON.parse(raw);
+      if (!obj || typeof obj !== "object") return false;
+      s = merge(defaultState(), obj);
+      return true;
+    }catch(e){ return false; }
+  }
+  function wipe(){
+    localStorage.removeItem(KEY);
+    location.reload();
+  }
+
+  // ---- map helpers ----
+  function idxXY(i){ return {x:i % s.size, y:Math.floor(i/s.size)}; }
+  function inBounds(x,y){ return x>=0 && y>=0 && x<s.size && y<s.size; }
+  function idx(x,y){ return y*s.size+x; }
+  function terrainDef(id){ return TERRAIN.find(t=>t.id===id) || TERRAIN[0]; }
+  function buildDef(id){ return BUILD[id] || BUILD.empty; }
+  function eraId(){ return ERA[s.eraIdx].id; }
+  function eraName(){ return ERA[s.eraIdx].name; }
+
+  function countOwned(){
+    let c=0;
+    for (const t of s.tiles) if (t.own) c++;
+    return c;
+  }
+  function adjOwned(i){
+    const {x,y}=idxXY(i);
+    const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+    for (const [dx,dy] of dirs){
+      const nx=x+dx, ny=y+dy;
+      if(!inBounds(nx,ny)) continue;
+      if (s.tiles[idx(nx,ny)].own) return true;
+    }
+    return false;
+  }
+  function revealAround(i){
+    const {x,y}=idxXY(i);
+    const dirs=[[0,0],[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]];
+    for (const [dx,dy] of dirs){
+      const nx=x+dx, ny=y+dy;
+      if(!inBounds(nx,ny)) continue;
+      s.tiles[idx(nx,ny)].fog=false;
+    }
+  }
+
+  // ---- economy ----
+  function cityBoost(){
+    const p = s.meta.perks;
+    const base = 1 + (s.meta.legacy * 0.05);
+    const all  = 1 + (p.all  * 0.03);
+    const cash = 1 + (p.cash * 0.04);
+    const mat  = 1 + (p.mat  * 0.04);
+    const food = 1 + (p.food * 0.04);
+    const sci  = 1 + (p.sci  * 0.05);
+    const stab = 1 + (p.stab * 0.06);
+    const pow  = 1 + (p.pow  * 0.05);
+    return {base, all, cash, mat, food, sci, stab, pow};
+  }
+
+  function powState(powMake, powNeed){
+    if (powNeed<=0) return {label:"OK", ratio:1, ok:true};
+    const r = clamp(powMake/powNeed, 0, 1);
+    if (r>=1) return {label:"OK", ratio:1, ok:true};
+    if (r>=0.76) return {label:"Strained", ratio:r, ok:false};
+    if (r>=0.46) return {label:"Brownout", ratio:r, ok:false};
+    return {label:"Critical", ratio:r, ok:false};
+  }
+
+  function upgradeCost(t){
+    const bd = buildDef(t.b);
+    if (t.b === "empty") return null;
+    const lvl = t.lv;
+    const base = bd.baseCost || {cash:100};
+    const mul = 1 + (lvl*0.45) + Math.pow(lvl,1.18)*0.12;
+    const cost = {};
+    for (const k in base){
+      cost[k] = Math.floor(base[k] * mul);
+    }
+    if (bd.era==="industrial") cost.sci = (cost.sci||0) + Math.floor(10*lvl);
+    if (bd.era==="modern") cost.sci = (cost.sci||0) + Math.floor(45*lvl);
+    if (bd.era==="future") cost.sci = (cost.sci||0) + Math.floor(90*lvl);
+    return cost;
+  }
+
+  function buildCost(id){
+    const bd = buildDef(id);
+    const cost = Object.assign({}, bd.baseCost||{});
+    // soft scaling by city level and count of same type (keeps variety valuable)
+    const same = s.tiles.reduce((a,t)=>a + (t.own && t.b===id ? 1:0), 0);
+    const mul = 1 + (s.cityLvl*0.02) + (same*0.06);
+    for (const k in cost) cost[k] = Math.floor(cost[k] * mul);
+    return cost;
+  }
+
+  function canPay(cost){
+    if (!cost) return false;
+    if ((cost.cash||0) > s.cash) return false;
+    if ((cost.mat||0)  > s.mat) return false;
+    if ((cost.food||0) > s.food) return false;
+    if ((cost.sci||0)  > s.sci) return false;
+    return true;
+  }
+  function pay(cost){
+    s.cash -= (cost.cash||0);
+    s.mat  -= (cost.mat||0);
+    s.food -= (cost.food||0);
+    s.sci  -= (cost.sci||0);
+  }
+
+  function tileProdBase(t){
+    // returns base per-second outputs for a single tile, BEFORE adjacency/terrain/mutations.
+    // outputs: cash, mat, food, sci, powMake, powNeed, pop, jobsNeed, stabGain
+    const bd = buildDef(t.b);
+    const lvl = t.lv;
+
+    let cash=0, mat=0, food=0, sci=0;
+    let powMake = bd.powMake||0;
+    let powNeed = bd.powNeed||0;
+    let pop = bd.pop||0;
+    let jobsNeed = bd.jobs||0;
+
+    // core loops: readable but deep enough
+    if (t.b==="farm"){ food += 2.8 + lvl*0.55; }
+    if (t.b==="saw"){ mat += 2.4 + lvl*0.50; }
+    if (t.b==="market"){ cash += 3.8 + lvl*0.72; food -= 1.0 + lvl*0.12; }
+    if (t.b==="factory"){ cash += 9.2 + lvl*1.15; mat += 3.5 + lvl*0.65; food -= 2.2 + lvl*0.20; }
+    if (t.b==="lab"){ sci += 7.2 + lvl*1.25; cash -= 2.6 + lvl*0.18; }
+    if (t.b==="port"){ cash += 15.5 + lvl*1.55; mat -= 1.9 + lvl*0.10; food -= 1.9 + lvl*0.10; }
+    if (t.b==="hub"){ cash += 0.7 + lvl*0.10; } // hubs are mostly adjacency multipliers elsewhere
+    if (t.b==="arc"){ cash += 5.8 + lvl*0.45; food -= 3.3 + lvl*0.22; }
+    if (t.b==="nano"){ mat += 7.6 + lvl*1.35; cash -= 1.6 + lvl*0.10; sci -= 0.6 + lvl*0.05; }
+    if (t.b==="power"){ powMake += 0.8*lvl; }   // leveling improves plant output
+    if (t.b==="fusion"){ powMake += 2.2*lvl; } // scaling fusion
+    if (t.b==="house"){ pop += lvl*2; }         // housing scales
+
+    // civic stability
+    let stabGain = 0;
+    if (t.b==="park") stabGain += 0.10 + lvl*0.02;
+    if (t.b==="police") stabGain += 0.12 + lvl*0.02;
+
+    // apply mutations (per-tile)
+    const mut = t.mut || {};
+    if (mut.pop) pop *= mut.pop;
+    if (mut.powNeed) powNeed += mut.powNeed;
+    if (mut.powMake) powMake += mut.powMake;
+    if (mut.jobs) jobsNeed = Math.max(0, Math.floor(jobsNeed * mut.jobs));
+    if (mut.out){
+      cash *= mut.out; mat *= mut.out; food *= mut.out; sci *= mut.out;
+    }
+    if (mut.cashOut) cash *= mut.cashOut;
+    if (mut.matOut) mat *= mut.matOut;
+    if (mut.sciOut) sci *= mut.sciOut;
+
+    return {cash, mat, food, sci, powMake, powNeed, pop, jobsNeed, stabGain};
+  }
+
+  function neighbors(i){
+    const {x,y}=idxXY(i);
+    const out=[];
+    const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+    for (const [dx,dy] of dirs){
+      const nx=x+dx, ny=y+dy;
+      if(!inBounds(nx,ny)) continue;
+      out.push(idx(nx,ny));
+    }
+    return out;
+  }
+
+  function calcCity(){
+    let cashPS=0, matPS=0, foodPS=0, sciPS=0;
+    let powMake=0, powNeed=0;
+    let pop=0, jobsNeed=0;
+    let stabGain=0;
+
+    // storage from warehouses/hubs
+    let wh=0, hub=0;
+
+    // adjacency multipliers (cluster bonuses)
+    // - markets next to housing: +cash
+    // - farms next to river: +food
+    // - factories next to road: +output
+    // - hubs next to anything: +output
+    // - coast boosts ports
+    let cityAdjCash=1, cityAdjMat=1, cityAdjFood=1, cityAdjSci=1;
+
+    for (let i=0;i<s.tiles.length;i++){
+      const t=s.tiles[i];
+      if(!t.own) continue;
+      const bd = buildDef(t.b);
+
+      if (t.b==="wh") wh++;
+      if (t.b==="hub") hub++;
+
+      const base = tileProdBase(t);
+
+      // terrain bonus
+      const td = terrainDef(t.terrain);
+      const tb = td.bonus || {};
+      // apply terrain to production (not to negatives)
+      base.cash = base.cash>0 ? base.cash*(1+(tb.cash||0)) : base.cash;
+      base.mat  = base.mat>0  ? base.mat *(1+(tb.mat||0))  : base.mat;
+      base.food = base.food>0 ? base.food*(1+(tb.food||0)) : base.food;
+      base.sci  = base.sci>0  ? base.sci *(1+(tb.sci||0))  : base.sci;
+
+      // adjacency: compute local multiplier
+      let local = 1;
+      const nb = neighbors(i).filter(j=>s.tiles[j].own);
+      const nearRoad = nb.some(j=>s.tiles[j].b==="road");
+      const nearHub  = nb.some(j=>s.tiles[j].b==="hub");
+      const nearHouse= nb.some(j=>s.tiles[j].b==="house" || s.tiles[j].b==="arc");
+      const nearMarket=nb.some(j=>s.tiles[j].b==="market");
+      const nearRiver = nb.some(j=>s.tiles[j].terrain==="river");
+      const nearCoast = nb.some(j=>s.tiles[j].terrain==="coast");
+      const nearPark  = nb.some(j=>s.tiles[j].b==="park");
+      const nearPolice= nb.some(j=>s.tiles[j].b==="police");
+
+      if (nearHub) local *= 1.06 + (hub*0.005); // hubs scale lightly with count
+      if (t.b==="factory" || t.b==="nano"){ if(nearRoad) local *= 1.12; }
+      if (t.b==="market"){ if(nearHouse) local *= 1.12; }
+      if (t.b==="farm"){ if(nearRiver) local *= 1.10; }
+      if (t.b==="port"){ if(nearCoast) local *= 1.14; }
+      if (t.b==="house" && nearPark) local *= 1.05;
+      if ((t.b==="house" || t.b==="market") && nearPolice) local *= 1.03;
+
+      // mutation: housing can grant cash adjacency
+      if ((t.b==="market") && s.tiles[i].mut?.cashAdj) local *= s.tiles[i].mut.cashAdj;
+
+      // wonders can add citywide adjacency via perm fields (simple flags)
+      cashPS += base.cash * local;
+      matPS  += base.mat  * local;
+      foodPS += base.food * local;
+      sciPS  += base.sci  * local;
+
+      powMake += base.powMake;
+      powNeed += base.powNeed;
+      pop += base.pop;
+      jobsNeed += base.jobsNeed;
+      stabGain += base.stabGain;
+    }
+
+    // storage caps (big feel with warehouses/hubs)
+    const lvl=s.cityLvl;
+    s.store.cashCap = 3000 + wh*2200 + hub*1600 + lvl*280;
+    s.store.matCap  = 1600 + wh*1400 + hub*900  + lvl*190;
+    s.store.foodCap = 1200 + wh*1000 + hub*800  + lvl*140;
+    s.store.sciCap  = 24000 + hub*12000 + lvl*1200;
+
+    // workforce and stability factors
+    const workers = pop + s.perm.housePop;
+    const jobRatio = jobsNeed<=0 ? 1 : clamp(workers / jobsNeed, 0, 1);
+
+    const pState = powState(powMake, powNeed);
+    const powFactor = pState.ok ? 1 : (0.55 + pState.ratio*0.45);
+
+    const stabCap = 100 + s.perm.stabCap;
+    const stabFactor = 0.65 + (s.stab/100)*0.45;
+
+    // global multipliers
+    const boost = cityBoost();
+
+    // mutations can inject citywide boosts (we keep them aggregated by scanning tiles)
+    let mutAll=0, mutCash=0, mutMat=0, mutFood=0, mutSci=0, mutStabCap=0, mutStabDrain=0, mutStabGain=0;
+    let powNeedCity = 0;
+
+    for (const t of s.tiles){
+      if(!t.own) continue;
+      const m=t.mut||{};
+      if (m.allCity) mutAll += m.allCity;
+      if (m.cashCity) mutCash += m.cashCity;
+      if (m.matCity)  mutMat += m.matCity;
+      if (m.foodCity) mutFood += m.foodCity;
+      if (m.sciCity)  mutSci += m.sciCity;
+      if (m.stabCap)  mutStabCap += m.stabCap;
+      if (m.stabDrain) mutStabDrain += m.stabDrain;
+      if (m.stabGain) mutStabGain += m.stabGain;
+      if (m.powNeedCity) powNeedCity += m.powNeedCity; // negative is good
+    }
+
+    const eraMul = (s.eraIdx===0?1 : s.eraIdx===1?1.10 : s.eraIdx===2?1.22 : 1.40);
+
+    const allMul = boost.base * boost.all * (1 + s.perm.allMul + mutAll) * eraMul;
+    const cashMul= (1 + s.perm.cashMul + mutCash) * boost.cash;
+    const matMul = (1 + s.perm.matMul  + mutMat)  * boost.mat;
+    const foodMul= (1 + s.perm.foodMul + mutFood) * boost.food;
+    const sciMul = (1 + s.perm.sciMul  + mutSci)  * boost.sci;
+
+    // apply tech specialization
+    const mCount = s.tiles.reduce((a,t)=>a + (t.own && t.b==="market" ? 1:0), 0);
+    const pCount = s.tiles.reduce((a,t)=>a + (t.own && t.b==="port" ? 1:0), 0);
+    if (mCount>0) cashPS *= (1 + s.perm.marketCashMul);
+    if (pCount>0) cashPS *= (1 + s.perm.tradeCashMul);
+
+    // apply the big final production factor
+    const prod = jobRatio * stabFactor * powFactor;
+    cashPS = cashPS * allMul * cashMul * prod;
+    matPS  = matPS  * allMul * matMul  * prod;
+    foodPS = foodPS * allMul * foodMul * prod;
+    sciPS  = sciPS  * allMul * sciMul  * prod;
+
+    // stability dynamics
+    let drain = 0.06 + mutStabDrain;
+    if (!pState.ok) drain += (1 - pState.ratio) * 0.22;
+    if (s.food <= 2) drain += 0.20;
+    if (s.cash <= 2) drain += 0.12;
+
+    // “crime” risk is implicit when stability is low; police helps via stabGain already
+    const gain = (0.10 + stabGain) * (1 + s.perm.stabGainMul + mutStabGain) * boost.stab;
+
+    // citywide power need adjust
+    const powNeedAdj = powNeed * (s.perm.powNeedMul * (1 + powNeedCity));
+    powNeed = Math.max(0, powNeedAdj);
+
+    return {
+      cashPS, matPS, foodPS, sciPS,
+      powMake, powNeed,
+      pop: workers, jobsNeed, jobsAvail: workers,
+      pState,
+      stabGain: gain,
+      stabDrain: drain,
+      stabCap: stabCap + mutStabCap
+    };
+  }
+
+  function addXP(x){
+    s.xp += x;
+    while (s.xp >= s.xpNeed){
+      s.xp -= s.xpNeed;
+      s.cityLvl++;
+      s.xpNeed = Math.floor(s.xpNeed*1.22 + 55);
+      Audio.level();
+      say(`City level up: <b>${s.cityLvl}</b>. Storage expanded. New contracts scale.`);
+      // reward ping
+      s.cash += 140 + s.cityLvl*40;
+      s.mat  += 70 + s.cityLvl*20;
+      s.sci  += 55 + s.cityLvl*18;
+
+      // era unlock check by science
+      const next = ERA[s.eraIdx+1];
+      if (next && s.sci >= next.reqSci){
+        s.eraIdx++;
+        say(`<b>ERA UNLOCKED:</b> ${ERA[s.eraIdx].name}. New build options & wonders.`);
+        toast(`Era: ${ERA[s.eraIdx].name}`);
+      }
+      checkSecrets();
+    }
+  }
+
+  // ---- contracts ----
+  function pickFaction(){
+    const avail = FACTIONS.filter(f => !f.requiresFlag || s.flags[f.requiresFlag]);
+    const r = rngFromSeed(s.seed + "-FACTION-" + s.contract.done + "-" + Math.floor(now()/60000))();
+    return avail[Math.floor(r*avail.length)];
+  }
+  function genContract(){
+    const f = pickFaction();
+    const owned = countOwned();
+    const lvl = s.cityLvl;
+
+    // pick type by era
+    const e = eraId();
+    const pool = [];
+    pool.push({kind:"expand", name:"Expand District", desc:"Buy territory tiles.", target: Math.max(3, Math.floor(owned*0.10)+2)});
+    pool.push({kind:"build", name:"Development Push", desc:"Construct buildings.", target: Math.max(4, Math.floor(owned*0.08)+3)});
+    pool.push({kind:"prod", name:"Production Quota", desc:"Reach a per-second output.", target: null});
+    if (e!=="dawn") pool.push({kind:"research", name:"Research Milestone", desc:"Earn science.", target: Math.max(600, Math.floor(900 + lvl*180))});
+    if (e==="modern" || e==="future") pool.push({kind:"trade", name:"Trade Surge", desc:"Maintain positive cash while using Trade Ports.", target: Math.max(1, Math.floor(owned/18))});
+
+    const r = rngFromSeed(s.seed + "-CONTRACT-" + s.contract.done + "-" + Math.floor(now()/120000))();
+    const c = pool[Math.floor(r*pool.length)];
+
+    const rewardBase = 240 + lvl*70 + owned*18;
+    const mul = 1 + Math.min(1.5, s.contract.streak*0.10);
+    const contractMul = (1 + s.perm.contractMul);
+    const reward = {
+      cash: Math.floor(rewardBase * mul * contractMul * (f.rewards.cash||1)),
+      mat:  Math.floor((rewardBase*0.55) * mul * contractMul * (f.rewards.mat||1)),
+      food: Math.floor((rewardBase*0.42) * mul * contractMul * (f.rewards.food||1)),
+      sci:  Math.floor((rewardBase*0.30) * mul * contractMul * (f.rewards.sci||1)),
+      legacy: (mul>1.55 && chance(0.18)) ? 1 : 0
+    };
+
+    // prod quota targets from current calc to keep it “possible”
+    if (c.kind==="prod"){
+      const cur = calcCity();
+      const pick = ["cashPS","matPS","foodPS","sciPS"][Math.floor(r*4)];
+      const wantMul = 1.25 + Math.min(1.1, lvl*0.02);
+      c.metric = pick;
+      c.metricName = pick==="cashPS"?"Cash/sec":pick==="matPS"?"Mat/sec":pick==="foodPS"?"Food/sec":"Sci/sec";
+      c.target = Math.floor(cur[pick]*wantMul + 8 + lvl*1.5);
+      c.desc = `Reach <b>${n(c.target)}</b> ${c.metricName}.`;
+    }
+
+    c.id = "C" + Math.floor(now()).toString(36).toUpperCase();
+    c.faction = f;
+    c.reward = reward;
+    c.progress = 0;
+    c.createdAt = now();
+    c.deadline = now() + (7*60*1000); // 7 minutes (fast loop portal style)
+    return c;
+  }
+
+  function ensureContract(){
+    if (s.contract.active) return;
+    s.contract.active = genContract();
+    s.contract.nextAt = now() + 90*1000;
+    say(`<b>CONTRACT:</b> ${s.contract.active.faction.name} — ${s.contract.active.name}.`);
+    toast("New Contract");
+  }
+
+  function contractProgressSnapshot(){
+    const c = s.contract.active;
+    if (!c) return null;
+
+    const calc = calcCity();
+    if (c.kind==="expand"){
+      // progress is how many tiles bought since start (tracked by baseline)
+      if (c.baseOwned == null) c.baseOwned = countOwned();
+      c.progress = Math.max(0, countOwned() - c.baseOwned);
+    }else if (c.kind==="build"){
+      if (c.baseBuild == null){
+        c.baseBuild = s.tiles.reduce((a,t)=>a+(t.own && t.b!=="empty" ? 1:0), 0);
+      }
+      const builtNow = s.tiles.reduce((a,t)=>a+(t.own && t.b!=="empty" ? 1:0), 0);
+      c.progress = Math.max(0, builtNow - c.baseBuild);
+    }else if (c.kind==="research"){
+      if (c.baseSci == null) c.baseSci = s.sci;
+      c.progress = Math.max(0, s.sci - c.baseSci);
+    }else if (c.kind==="trade"){
+      // require at least X ports and net cashPS positive
+      const ports = s.tiles.reduce((a,t)=>a+(t.own && t.b==="port"?1:0),0);
+      c.progress = (ports>=c.target && calc.cashPS>0) ? c.target : Math.min(ports, c.target);
+    }else if (c.kind==="prod"){
+      const cur = calc[c.metric];
+      c.progress = Math.floor(cur);
+    }
+    return c;
+  }
+
+  function completeContract(){
+    const c = s.contract.active;
+    if (!c) return;
+    // deadline check
+    const late = now() > c.deadline;
+    if (late){
+      s.contract.streak = 0;
+      say(`<b>Contract failed.</b> Streak reset.`);
+      Audio.danger();
+      s.contract.active = null;
+      return;
+    }
+
+    const done = c.kind==="prod" ? (c.progress >= c.target) : (c.progress >= c.target);
+    if (!done) return;
+
+    // payout
+    s.cash += c.reward.cash;
+    s.mat  += c.reward.mat;
+    s.food += c.reward.food;
+    s.sci  += c.reward.sci;
+    if (c.reward.legacy) s.meta.legacy += c.reward.legacy;
+
+    s.contract.done++;
+    s.contract.streak++;
+    say(`<b>Contract complete:</b> ${c.name}. Rewards: +${n(c.reward.cash)} cash, +${n(c.reward.mat)} mat, +${n(c.reward.food)} food, +${n(c.reward.sci)} sci${c.reward.legacy?`, +${c.reward.legacy} legacy`:``}.`);
+    toast("Contract Complete");
+    Audio.level();
+
+    s.contract.active = null;
+    ensureContract();
+    checkSecrets();
+  }
+
+  // ---- wonders ----
+  function canSeeWonder(w){
+    const order = {dawn:0, industrial:1, modern:2, future:3};
+    return order[eraId()] >= order[w.era];
+  }
+  function startWonder(id){
+    const w = WONDER.find(x=>x.id===id);
+    if(!w) return;
+    if(s.wonder.done[id]) { toast("Already built"); return; }
+    if(!canSeeWonder(w)){ toast("Locked by era"); return; }
+    s.wonder.active = id;
+    if(!s.wonder.prog[id]) s.wonder.prog[id] = {cash:0, mat:0, food:0, sci:0};
+    say(`<b>WONDER STARTED:</b> ${w.name}.`);
+    toast("Wonder Started");
+  }
+  function contributeWonder(){
+    const id = s.wonder.active;
+    if(!id) return;
+    const w = WONDER.find(x=>x.id===id);
+    if(!w) return;
+
+    const p = s.wonder.prog[id] || (s.wonder.prog[id]={cash:0,mat:0,food:0,sci:0});
+
+    // contribute a chunk (fast loop feel)
+    const chunk = {
+      cash: Math.min(s.cash, Math.max(120, Math.floor(s.store.cashCap*0.06))),
+      mat:  Math.min(s.mat,  Math.max(70,  Math.floor(s.store.matCap*0.06))),
+      food: Math.min(s.food, Math.max(40,  Math.floor(s.store.foodCap*0.05))),
+      sci:  Math.min(s.sci,  Math.max(30,  Math.floor(s.store.sciCap*0.02))),
+    };
+
+    // only pay what is still needed
+    const need = (k)=>Math.max(0, (w.cost[k]||0) - (p[k]||0));
+    const payNow = {};
+    for (const k of ["cash","mat","food","sci"]){
+      payNow[k] = Math.min(chunk[k], need(k));
+    }
+
+    if (payNow.cash<=0 && payNow.mat<=0 && payNow.food<=0 && payNow.sci<=0){
+      toast("Wonder already funded");
+      return;
+    }
+
+    s.cash -= payNow.cash; s.mat -= payNow.mat; s.food -= payNow.food; s.sci -= payNow.sci;
+    p.cash += payNow.cash; p.mat += payNow.mat; p.food += payNow.food; p.sci += payNow.sci;
+
+    Audio.build();
+    say(`Contributed to <b>${w.name}</b>: -${n(payNow.cash)} cash, -${n(payNow.mat)} mat, -${n(payNow.food)} food, -${n(payNow.sci)} sci.`);
+
+    // check completion
+    let done=true;
+    for (const k of ["cash","mat","food","sci"]){
+      if ((p[k]||0) < (w.cost[k]||0)) done=false;
+    }
+    if (done){
+      s.wonder.done[id]=true;
+      s.wonder.active=null;
+      w.perk(s);
+      Audio.level();
+      say(`<b>WONDER COMPLETE:</b> ${w.name}. ${w.desc}`);
+      toast("WONDER COMPLETE");
+      checkSecrets();
+    }
+  }
+
+  // ---- secrets ----
+  function secretHit(id){
+    if (s.secrets.found[id]) return;
+    s.secrets.found[id]=true;
+    const sec = SECRET_LIST.find(x=>x.id===id);
+    let msg = sec ? sec.name : ("Secret " + id);
+
+    // reward
+    if (sec?.reward==="cash"){ s.cash += 900 + s.cityLvl*140; }
+    if (sec?.reward==="mat"){ s.mat += 600 + s.cityLvl*95; }
+    if (sec?.reward==="sci"){ s.sci += 450 + s.cityLvl*110; }
+    if (sec?.reward==="legacy"){ s.meta.legacy += 1; }
+
+    say(`<b>SECRET FOUND:</b> ${msg}.`);
+    toast("SECRET UNLOCKED");
+    Audio.level();
+  }
+
+  function secretKeyInput(k){
+    s.secrets.keySeq = (s.secrets.keySeq + k).slice(-12);
+    const seq = s.secrets.keySeq;
+    if (seq.endsWith("baker")) secretHit("baker");
+    if (seq.endsWith("empire")) secretHit("empire");
+  }
+
+  function checkSecrets(){
+    // perfect week
+    if (s.daily.streak >= 7) secretHit("perfect");
+
+    // grid pattern: any 2x2 roads block
+    const z=s.size;
+    for (let y=0;y<z-1;y++){
+      for (let x=0;x<z-1;x++){
+        const a=s.tiles[idx(x,y)], b=s.tiles[idx(x+1,y)], c=s.tiles[idx(x,y+1)], d=s.tiles[idx(x+1,y+1)];
+        if (a.own&&b.own&&c.own&&d.own && a.b==="road"&&b.b==="road"&&c.b==="road"&&d.b==="road"){
+          secretHit("grid");
+          return;
+        }
+      }
+    }
+  }
+
+  // blackout survivor tracking
+  function updateBlackoutSecret(dt, calc){
+    const strained = (!calc.pState.ok && calc.pState.ratio >= 0.55);
+    if (strained && s.stab >= 60){
+      s.t.blackoutT += dt;
+      if (s.t.blackoutT >= 120){
+        secretHit("blackout");
+      }
+    }else{
+      s.t.blackoutT = Math.max(0, s.t.blackoutT - dt*0.6);
+    }
+  }
+
+  // ---- mutations picker ----
+  function mutationStepFor(t){
+    const rules = MUTATIONS[t.b];
+    if (!rules) return null;
+    for (const r of rules){
+      if (t.lv >= r.at && !t.mut[`_picked_${r.at}`]) return r;
+    }
+    return null;
+  }
+
+  function openMutationPicker(tileIdx, rule){
+    const t = s.tiles[tileIdx];
+    const bd = buildDef(t.b);
+
+    mTitle.textContent = "Mutation";
+    mBody.innerHTML = `
+      <div class="kpi">
+        <div class="lab">${bd.name} Level ${t.lv}</div>
+        <div class="mut">Your city just crossed a threshold. Pick a specialization.</div>
+      </div>
+      <div style="height:10px"></div>
+      <div class="grid2" id="mutGrid"></div>
+      <div style="height:10px"></div>
+      <div class="mut">This choice is permanent for this tile (until prestige/reset).</div>
+    `;
+    const g = mBody.querySelector("#mutGrid");
+    for (const opt of rule.options){
+      const b = document.createElement("button");
+      b.className = "btn good";
+      b.innerHTML = `<b>${opt.name}</b><span class="r">Pick</span><small>${opt.desc}</small>`;
+      b.onclick = () => {
+        // apply multipliers
+        for (const k in opt.m){
+          if (typeof opt.m[k]==="number"){
+            // some fields are additive, others multiplicative. Keep it simple:
+            if (k==="stabCap" || k==="powNeed" || k==="powMake" || k==="stabDrain") t.mut[k] = (t.mut[k]||0) + opt.m[k];
+            else t.mut[k] = (t.mut[k]||1) * opt.m[k];
+          }
+        }
+        t.mut[`_picked_${rule.at}`] = opt.id;
+        bdFx(tileIdx, "shock");
+        say(`<b>Mutation:</b> ${bd.name} → ${opt.name}.`);
+        Audio.level();
+        closeModal();
+        render();
+      };
+      g.appendChild(b);
+    }
+    openModal();
+  }
+
+  // ---- building / expanding ----
+  function nextTilePrice(){
+    const owned = countOwned();
+    const base = 160;
+    return Math.floor(base * Math.pow(1.15, owned-1));
+  }
+
+  function buyTile(i){
+    const t=s.tiles[i];
+    if (t.own) return;
+    if (!adjOwned(i)) { toast("Expand next to your city"); return; }
+    const price = nextTilePrice();
+    if (s.cash < price){ toast("Not enough cash"); return; }
+
+    s.cash -= price;
+    t.own=true;
+    t.b="empty";
+    t.lv=1;
+    t.mut={};
+    revealAround(i);
+
+    bdFx(i, "spark");
+    Audio.build();
+    say(`Expanded territory (+1 tile).`);
+    toast("Territory Expanded");
+    ensureContract();
+    checkSecrets();
+    render();
+  }
+
+  function canBuild(id){
+    const bd = buildDef(id);
+    const order = {dawn:0, industrial:1, modern:2, future:3};
+    return order[eraId()] >= order[bd.era||"dawn"];
+  }
+
+  function buildHere(id){
+    const t=s.tiles[s.sel];
+    if (!t.own){ toast("Buy the tile first"); return; }
+    if (!canBuild(id)){ toast("Locked by era"); return; }
+    const cost = buildCost(id);
+    if (!canPay(cost)){ toast("Can't afford"); return; }
+
+    pay(cost);
+    t.b=id;
+    t.lv=1;
+    t.mut={};
+    bdFx(s.sel, "build");
+    Audio.build();
+    say(`Built <b>${buildDef(id).name}</b>.`);
+    ensureContract();
+    checkSecrets();
+    render();
+  }
+
+  function demolish(){
+    const t=s.tiles[s.sel];
+    if (!t.own || t.b==="empty") return;
+    t.b="empty";
+    t.lv=1;
+    t.mut={};
+    bdFx(s.sel, "spark");
+    Audio.click();
+    say("Demolished building.");
+    render();
+  }
+
+  function upgradeBuilding(){
+    const t=s.tiles[s.sel];
+    if (!t.own || t.b==="empty"){ toast("Nothing to upgrade"); return; }
+    const cost = upgradeCost(t);
+    if (!canPay(cost)){ toast("Can't afford upgrade"); return; }
+    pay(cost);
+    t.lv++;
+    bdFx(s.sel, "level");
+    Audio.level();
+    say(`Upgraded <b>${buildDef(t.b).name}</b> to Lv ${t.lv}.`);
+
+    // check mutation
+    const rule = mutationStepFor(t);
+    if (rule) openMutationPicker(s.sel, rule);
+
+    checkSecrets();
+    render();
+  }
+
+  // ---- tech ----
+  function canSeeTech(t){
+    const order = {dawn:0, industrial:1, modern:2, future:3};
+    return order[eraId()] >= order[t.era];
+  }
+  function buyTech(id){
+    const t = TECH.find(x=>x.id===id);
+    if (!t) return;
+    if (s.techDone[id]) return;
+    if (!canSeeTech(t)){ toast("Locked by era"); return; }
+    if (s.sci < t.cost){ toast("Not enough science"); return; }
+    s.sci -= t.cost;
+    s.techDone[id]=true;
+    t.apply(s);
+    Audio.level();
+    say(`Tech researched: <b>${t.name}</b>.`);
+    render();
+  }
+
+  // ---- daily ----
+  function dailyStatus(){
+    const today = dayIndex(now());
+    const ready = s.daily.lastDay !== today;
+    return {today, ready};
+  }
+  function claimDaily(){
+    const st = dailyStatus();
+    if (!st.ready){ toast("Already claimed"); return; }
+
+    const yday = st.today-1;
+    if (s.daily.lastDay === yday) s.daily.streak++;
+    else s.daily.streak=1;
+    s.daily.lastDay = st.today;
+
+    const streak=s.daily.streak;
+    const mult = 1 + Math.min(2.2, streak*0.10);
+    const base = 320 + s.cityLvl*100 + countOwned()*18;
+    const gainCash = Math.floor(base*mult);
+    const gainMat  = Math.floor(base*0.55*mult);
+    const gainFood = Math.floor(base*0.42*mult);
+    const gainSci  = Math.floor(base*0.26*mult);
+
+    s.cash += gainCash; s.mat += gainMat; s.food += gainFood; s.sci += gainSci;
+
+    if (streak % 7 === 0){
+      s.meta.legacy += 1;
+      say("Weekly streak bonus: <b>+1 legacy</b>.");
+    }
+    if (s.flags.legacyDaily){
+      s.meta.legacy += 1;
+      say("Space Elevator bonus: <b>+1 legacy</b>.");
+    }
+
+    Audio.level();
+    say(`Daily Shipment (streak <b>${streak}</b>): +${n(gainCash)} cash, +${n(gainMat)} mat, +${n(gainFood)} food, +${n(gainSci)} sci.`);
+    toast("Daily Claimed");
+    checkSecrets();
+    render();
+  }
+
+  // ---- prestige / meta ----
+  function prestigeGain(){
+    const owned = countOwned();
+    const score = owned*1.4 + s.cityLvl*2.2 + Math.sqrt(s.sci/40) + Object.keys(s.wonder.done).length*8;
+    return Math.max(1, Math.floor(score/12));
+  }
+  function prestige(){
+    const gain = prestigeGain();
+    const msg = `Start a New Era?\n\nGain +${gain} Legacy.\nReset city/map. Keep legacy/perks/secrets.\nKeep some tech after multiple resets.\n\nDo it?`;
+    if (!confirm(msg)) return;
+
+    s.meta.legacy += gain;
+    s.meta.eraResets += 1;
+
+    // keep rules: always keep Dawn tech; keep Industrial after 2 resets; keep Modern after 4.
+    const keepTech = {};
+    const order = {dawn:0, industrial:1, modern:2, future:3};
+    for (const t of TECH){
+      if (!s.techDone[t.id]) continue;
+      if (t.era==="dawn") keepTech[t.id]=true;
+      if (t.era==="industrial" && s.meta.eraResets>=2) keepTech[t.id]=true;
+      if (t.era==="modern" && s.meta.eraResets>=4) keepTech[t.id]=true;
+    }
+
+    const keep = {
+      meta:s.meta, secrets:s.secrets, set:s.set, daily:s.daily,
+      techDone: keepTech
+    };
+
+    const fresh = defaultState();
+    s = merge(fresh, keep);
+
+    // reapply tech
+    s.perm = defaultState().perm;
+    for (const id in s.techDone){
+      const t = TECH.find(x=>x.id===id);
+      if (t) t.apply(s);
+    }
+
+    Audio.level();
+    say(`New Era started. Legacy gained: <b>${gain}</b>.`);
+    render();
+    save();
+  }
+
+  function perkCost(k){
+    const lv=s.meta.perks[k]||0;
+    return Math.floor(1 + lv*1.25);
+  }
+  function buyPerk(k){
+    const c=perkCost(k);
+    if (s.meta.legacy < c){ toast("Not enough legacy"); return; }
+    s.meta.legacy -= c;
+    s.meta.spent += c;
+    s.meta.perks[k] = (s.meta.perks[k]||0)+1;
+    Audio.level();
+    say(`Legacy perk upgraded: <b>${k.toUpperCase()}</b>.`);
+    render();
+    save();
+  }
+
+  // ---- visuals: canvas city renderer ----
+  let cnv=null, ctx=null;
+  function ensureCanvas(){
+    cnv = $("cityCanvas");
+    if (!cnv) return;
+    ctx = cnv.getContext("2d");
+    const w = cnv.clientWidth;
+    const h = Math.floor(w*0.74);
+    cnv.width = Math.floor(w*2);
+    cnv.height = Math.floor(h*2);
+    cnv.style.height = h+"px";
+    cnv.style.width = w+"px";
+  }
+
+  function colorMix(a,b,t){
+    const pa = a.match(/\w\w/g).map(x=>parseInt(x,16));
+    const pb = b.match(/\w\w/g).map(x=>parseInt(x,16));
+    const pc = pa.map((v,i)=>Math.floor(v+(pb[i]-v)*t));
+    return "#"+pc.map(v=>v.toString(16).padStart(2,"0")).join("");
+  }
+
+  function tileStyle(t){
+    const td = terrainDef(t.terrain);
+    if (t.fog) return {base:"#071026", edge:"#10204f", glow:"rgba(106,167,255,.06)"};
+
+    const map = {
+      plains:{base:"#0a1530", edge:"#163066", glow:"rgba(70,245,154,.06)"},
+      forest:{base:"#07172c", edge:"#12405a", glow:"rgba(70,245,154,.10)"},
+      river:{base:"#07142b", edge:"#1b3d7a", glow:"rgba(106,167,255,.12)"},
+      hill:{base:"#0b142a", edge:"#3a2a74", glow:"rgba(181,106,255,.10)"},
+      coast:{base:"#071129", edge:"#2b4a88", glow:"rgba(106,167,255,.14)"},
+      ruins:{base:"#0c0f21", edge:"#6a4bff", glow:"rgba(181,106,255,.18)"},
+      oil:{base:"#0a0e1e", edge:"#ffb86a", glow:"rgba(255,211,106,.14)"},
+    };
+    return map[td.id] || map.plains;
+  }
+
+  function bdFx(i, kind){
+    const t=s.tiles[i];
+    t.anim = 1;
+    t.fx = t.fx || [];
+    if (kind==="spark"){
+      t.fx.push({k:"spark", a:1});
+    }else if(kind==="build"){
+      t.fx.push({k:"build", a:1});
+    }else if(kind==="level"){
+      t.fx.push({k:"level", a:1});
+    }else if(kind==="shock"){
+      t.fx.push({k:"shock", a:1});
+    }
+  }
+
+  function draw(){
+    if (!ctx || !cnv) return;
+
+    const W=cnv.width, H=cnv.height;
+    ctx.clearRect(0,0,W,H);
+
+    // day/night cycle
+    const t = now()/1000;
+    const phase = (Math.sin(t/18)*0.5+0.5); // 0..1
+    const sky1 = colorMix("061027","0b0520", phase);
+    const sky2 = colorMix("050814","090b1c", phase);
+
+    const grd = ctx.createLinearGradient(0,0,0,H);
+    grd.addColorStop(0, sky1);
+    grd.addColorStop(1, sky2);
+    ctx.fillStyle = grd;
+    ctx.fillRect(0,0,W,H);
+
+    // soft stars at night
+    const night = 1-phase;
+    if (night>0.35){
+      ctx.globalAlpha = (night-0.35)*0.55;
+      for (let i=0;i<45;i++){
+        const rx = (Math.sin(i*999 + t*0.17)*0.5+0.5)*W;
+        const ry = (Math.sin(i*777 + t*0.11)*0.5+0.5)*H*0.55;
+        ctx.fillStyle = "rgba(255,255,255,.8)";
+        ctx.fillRect(rx, ry, 2, 2);
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    // grid layout
+    const z=s.size;
+    const pad = 20;
+    const gridW = W - pad*2;
+    const gridH = H - pad*2;
+    const gap = Math.max(8, Math.floor(Math.min(gridW,gridH) / (z*6)));
+    const cell = Math.floor((Math.min(gridW,gridH) - gap*(z-1)) / z);
+    const startX = Math.floor((W - (cell*z + gap*(z-1)))/2);
+    const startY = Math.floor((H - (cell*z + gap*(z-1)))/2);
+
+    // subtle vignette
+    ctx.save();
+    const vg = ctx.createRadialGradient(W*0.5, H*0.55, H*0.05, W*0.5, H*0.55, H*0.72);
+    vg.addColorStop(0, "rgba(0,0,0,0)");
+    vg.addColorStop(1, "rgba(0,0,0,0.42)");
+    ctx.fillStyle = vg;
+    ctx.fillRect(0,0,W,H);
+    ctx.restore();
+
+    // draw tiles
+    for (let y=0;y<z;y++){
+      for (let x=0;x<z;x++){
+        const i=idx(x,y);
+        const t0=s.tiles[i];
+        const X = startX + x*(cell+gap);
+        const Y = startY + y*(cell+gap);
+
+        const st = tileStyle(t0);
+        const isSel = (i===s.sel);
+
+        // tile base
+        ctx.save();
+        ctx.translate(X,Y);
+
+        // shadow
+        ctx.fillStyle = "rgba(0,0,0,.35)";
+        roundRect(ctx, 0, 5, cell, cell, 18);
+        ctx.fill();
+
+        // base
+        ctx.fillStyle = st.base;
+        roundRect(ctx, 0, 0, cell, cell, 18);
+        ctx.fill();
+
+        // edge
+        ctx.strokeStyle = isSel ? "rgba(106,167,255,.95)" : st.edge;
+        ctx.lineWidth = isSel ? 3 : 2;
+        roundRect(ctx, 0, 0, cell, cell, 18);
+        ctx.stroke();
+
+        // fog overlay
+        if (t0.fog){
+          ctx.fillStyle = "rgba(0,0,0,.45)";
+          roundRect(ctx, 0, 0, cell, cell, 18);
+          ctx.fill();
+          // fog glyph
+          ctx.globalAlpha = 0.85;
+          ctx.fillStyle = "rgba(155,176,216,.70)";
+          ctx.font = `${Math.floor(cell*0.20)}px system-ui`;
+          ctx.fillText("???", Math.floor(cell*0.18), Math.floor(cell*0.56));
+          ctx.globalAlpha = 1;
+          ctx.restore();
+          continue;
+        }
+
+        // terrain tag
+        ctx.globalAlpha = 0.9;
+        ctx.fillStyle = "rgba(155,176,216,.75)";
+        ctx.font = `${Math.floor(cell*0.14)}px system-ui`;
+        ctx.fillText(terrainDef(t0.terrain).tag, Math.floor(cell*0.10), Math.floor(cell*0.22));
+        ctx.globalAlpha = 1;
+
+        // ownership glow
+        if (t0.own){
+          ctx.fillStyle = st.glow;
+          roundRect(ctx, 2, 2, cell-4, cell-4, 16);
+          ctx.fill();
+        }
+
+        // building visuals (procedural mini-sprite)
+        drawBuildingSprite(ctx, t0, cell, phase);
+
+        // fx overlays
+        if (t0.fx && t0.fx.length){
+          for (const fx of t0.fx){
+            if (fx.k==="spark"){
+              ctx.globalAlpha = fx.a*0.8;
+              ctx.strokeStyle = "rgba(70,245,154,.85)";
+              ctx.lineWidth = 2;
+              ctx.beginPath();
+              ctx.arc(cell*0.5, cell*0.5, cell*(0.22 + (1-fx.a)*0.25), 0, Math.PI*2);
+              ctx.stroke();
+              ctx.globalAlpha = 1;
+            }else if (fx.k==="build"){
+              ctx.globalAlpha = fx.a;
+              ctx.fillStyle = "rgba(106,167,255,.22)";
+              roundRect(ctx, 4, 4, cell-8, cell-8, 14);
+              ctx.fill();
+              ctx.globalAlpha = 1;
+            }else if (fx.k==="level"){
+              ctx.globalAlpha = fx.a;
+              ctx.fillStyle = "rgba(181,106,255,.22)";
+              roundRect(ctx, 6, 6, cell-12, cell-12, 14);
+              ctx.fill();
+              ctx.globalAlpha = 1;
+            }else if (fx.k==="shock"){
+              ctx.globalAlpha = fx.a;
+              ctx.strokeStyle = "rgba(255,211,106,.85)";
+              ctx.lineWidth = 2;
+              ctx.beginPath();
+              ctx.arc(cell*0.5, cell*0.5, cell*(0.18 + (1-fx.a)*0.40), 0, Math.PI*2);
+              ctx.stroke();
+              ctx.globalAlpha = 1;
+            }
+            fx.a -= 0.03;
+          }
+          t0.fx = t0.fx.filter(f=>f.a>0);
+        }
+
+        // selected label
+        if (isSel){
+          ctx.globalAlpha = 0.95;
+          ctx.fillStyle = "rgba(232,240,255,.9)";
+          ctx.font = `${Math.floor(cell*0.15)}px system-ui`;
+          ctx.fillText("SELECTED", Math.floor(cell*0.10), Math.floor(cell*0.92));
+          ctx.globalAlpha = 1;
+        }
+
+        ctx.restore();
+      }
+    }
+
+    // top HUD flavor line
+    ctx.save();
+    ctx.globalAlpha = 0.9;
+    ctx.fillStyle = "rgba(232,240,255,.9)";
+    ctx.font = `${Math.floor(H*0.03)}px system-ui`;
+    ctx.fillText("PROCEDURAL CITY RENDER • DAY/NIGHT • TRAFFIC • EVOLUTION", Math.floor(W*0.06), Math.floor(H*0.09));
+    ctx.globalAlpha = 0.6;
+    ctx.fillStyle = "rgba(155,176,216,.9)";
+    ctx.font = `${Math.floor(H*0.022)}px system-ui`;
+    ctx.fillText(`WORLD SEED: ${s.seed}`, Math.floor(W*0.06), Math.floor(H*0.125));
+    ctx.restore();
+  }
+
+  function roundRect(ctx, x,y,w,h,r){
+    const rr = Math.min(r, w/2, h/2);
+    ctx.beginPath();
+    ctx.moveTo(x+rr, y);
+    ctx.arcTo(x+w, y, x+w, y+h, rr);
+    ctx.arcTo(x+w, y+h, x, y+h, rr);
+    ctx.arcTo(x, y+h, x, y, rr);
+    ctx.arcTo(x, y, x+w, y, rr);
+    ctx.closePath();
+  }
+
+  function drawBuildingSprite(ctx, t, cell, phase){
+    const bd = buildDef(t.b);
+    const lvl = t.lv;
+
+    // empty: show subtle grid dots + terrain accent
+    if (!t.own || t.b==="empty"){
+      ctx.globalAlpha = 0.7;
+      ctx.fillStyle = "rgba(155,176,216,.18)";
+      for (let i=0;i<4;i++){
+        ctx.fillRect(cell*(0.22+i*0.18), cell*0.60, 3, 3);
+      }
+      ctx.globalAlpha = 1;
+      return;
+    }
+
+    // “growth” tiers by level
+    const tier = lvl>=15 ? 4 : lvl>=10 ? 3 : lvl>=6 ? 2 : 1;
+
+    // base plate
+    ctx.globalAlpha = 0.9;
+    ctx.fillStyle = "rgba(0,0,0,.25)";
+    roundRect(ctx, cell*0.18, cell*0.58, cell*0.64, cell*0.26, 12);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // windows brightness depends on night
+    const night = 1-phase;
+    const winA = clamp(night*1.2, 0.25, 0.95);
+
+    // building palette by kind
+    let body = "rgba(106,167,255,.45)";
+    let edge = "rgba(106,167,255,.85)";
+    let accent = "rgba(181,106,255,.75)";
+
+    if (bd.kind==="food"){ body="rgba(70,245,154,.18)"; edge="rgba(70,245,154,.65)"; accent="rgba(255,211,106,.60)"; }
+    if (bd.kind==="mat"){ body="rgba(181,106,255,.18)"; edge="rgba(181,106,255,.65)"; accent="rgba(106,167,255,.60)"; }
+    if (bd.kind==="cash"){ body="rgba(106,167,255,.20)"; edge="rgba(255,211,106,.70)"; accent="rgba(106,167,255,.70)"; }
+    if (bd.kind==="ind"){ body="rgba(255,211,106,.18)"; edge="rgba(255,211,106,.70)"; accent="rgba(181,106,255,.60)"; }
+    if (bd.kind==="power"){ body="rgba(255,80,119,.14)"; edge="rgba(255,80,119,.70)"; accent="rgba(255,211,106,.70)"; }
+    if (bd.kind==="sci"){ body="rgba(181,106,255,.22)"; edge="rgba(181,106,255,.78)"; accent="rgba(70,245,154,.55)"; }
+    if (bd.kind==="civic"){ body="rgba(106,167,255,.16)"; edge="rgba(70,245,154,.60)"; accent="rgba(255,211,106,.55)"; }
+    if (bd.kind==="trade"){ body="rgba(106,167,255,.18)"; edge="rgba(255,211,106,.82)"; accent="rgba(255,80,119,.55)"; }
+    if (bd.kind==="hub"){ body="rgba(181,106,255,.16)"; edge="rgba(106,167,255,.82)"; accent="rgba(70,245,154,.60)"; }
+    if (bd.kind==="util"){ body="rgba(155,176,216,.10)"; edge="rgba(155,176,216,.55)"; accent="rgba(106,167,255,.55)"; }
+    if (t.b==="fusion"){ body="rgba(255,80,119,.16)"; edge="rgba(255,211,106,.85)"; accent="rgba(181,106,255,.75)"; }
+    if (t.b==="arc"){ body="rgba(106,167,255,.18)"; edge="rgba(70,245,154,.85)"; accent="rgba(181,106,255,.80)"; }
+
+    // draw by tier: low tier = blocks; high tier = skyline
+    const baseX = cell*0.22, baseY = cell*0.22;
+    const w = cell*0.56, h = cell*0.52;
+
+    ctx.fillStyle = body;
+    ctx.strokeStyle = edge;
+    ctx.lineWidth = 2;
+
+    // draw multiple towers for higher tiers
+    const towers = tier===1 ? 1 : tier===2 ? 2 : tier===3 ? 3 : 4;
+    for (let k=0;k<towers;k++){
+      const tw = w / (towers + 0.6);
+      const gap = tw*0.25;
+      const tx = baseX + k*(tw+gap);
+      const th = h * (0.55 + (k*0.12)) * (tier>=4?1.08:1);
+      const ty = baseY + (h - th);
+
+      roundRect(ctx, tx, ty, tw, th, 10);
+      ctx.fill();
+      ctx.stroke();
+
+      // windows
+      ctx.globalAlpha = winA;
+      ctx.fillStyle = "rgba(255,255,255,.22)";
+      const rows = Math.floor(3 + tier*2);
+      const cols = Math.max(2, Math.floor(tw / (cell*0.08)));
+      for (let ry=0; ry<rows; ry++){
+        for (let cx=0; cx<cols; cx++){
+          if (Math.sin((ry+1)*(cx+2)*13.7 + (now()/350)) < 0.1) continue;
+          const wx = tx + tw*0.14 + cx*(tw*0.68/cols);
+          const wy = ty + th*0.16 + ry*(th*0.70/rows);
+          ctx.fillRect(wx, wy, 3, 3);
+        }
+      }
+      ctx.globalAlpha = 1;
+
+      // roof accent
+      ctx.strokeStyle = accent;
+      ctx.beginPath();
+      ctx.moveTo(tx+2, ty+2);
+      ctx.lineTo(tx+tw-2, ty+2);
+      ctx.stroke();
+      ctx.strokeStyle = edge;
+    }
+
+    // kind-specific extras
+    if (bd.kind==="food"){
+      // fields
+      ctx.globalAlpha = 0.75;
+      ctx.strokeStyle = "rgba(70,245,154,.55)";
+      for (let i=0;i<4;i++){
+        ctx.beginPath();
+        ctx.moveTo(cell*(0.20+i*0.15), cell*0.85);
+        ctx.lineTo(cell*(0.30+i*0.15), cell*0.68);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+    if (bd.kind==="power"){
+      // coil glow
+      ctx.globalAlpha = 0.85;
+      ctx.strokeStyle = "rgba(255,211,106,.75)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(cell*0.78, cell*0.30, cell*0.07, 0, Math.PI*2);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    if (bd.kind==="trade"){
+      // shipping lines
+      ctx.globalAlpha = 0.7;
+      ctx.strokeStyle = "rgba(106,167,255,.75)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(cell*0.20, cell*0.78);
+      ctx.lineTo(cell*0.80, cell*0.62);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    if (bd.kind==="util" && t.b==="road"){
+      // road stripe
+      ctx.globalAlpha = 0.8;
+      ctx.strokeStyle = "rgba(155,176,216,.55)";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(cell*0.18, cell*0.68);
+      ctx.lineTo(cell*0.82, cell*0.68);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+
+    // label
+    ctx.globalAlpha = 0.92;
+    ctx.fillStyle = "rgba(232,240,255,.90)";
+    ctx.font = `${Math.floor(cell*0.13)}px system-ui`;
+    ctx.fillText(`${bd.name} Lv${lvl}`, Math.floor(cell*0.10), Math.floor(cell*0.18));
+    ctx.globalAlpha = 1;
+  }
+
+  // ---- modal helpers ----
+  function openModal(){ bd.style.display="flex"; }
+  function closeModal(){ bd.style.display="none"; }
+  mClose.onclick = closeModal;
+  bd.addEventListener("click", (e)=>{ if(e.target===bd) closeModal(); });
+
+  // ---- UI: pills ----
+  function pill(html, cls){
+    const d=document.createElement("div");
+    d.className="pill" + (cls ? " "+cls : "");
+    d.innerHTML=html;
+    return d;
+  }
+  function buildPills(calc){
+    pills.innerHTML="";
+    const owned=countOwned();
+    const risk = s.stab>=82?"Low":s.stab>=62?"Medium":s.stab>=38?"High":"MAX";
+    $("k_risk").textContent=risk;
+
+    const boost=cityBoost();
+    const bx=(boost.base*boost.all).toFixed(2);
+
+    const c = s.contract.active;
+    const cLeft = c ? Math.max(0, c.deadline-now()) : 0;
+    const cTag = c ? `${c.faction.name}` : "OFF";
+
+    pills.append(
+      pill(`Tiles <b>${owned}</b>`, owned>=40 ? "ok" : ""),
+      pill(`Stability <b>${Math.floor(s.stab)}%</b>`, s.stab<40 ? "dead" : s.stab<65 ? "hot" : "ok"),
+      pill(`Power <b>${calc.pState.label}</b>`, calc.pState.ok ? "ok" : (calc.pState.ratio<0.46 ? "dead":"hot")),
+      pill(`Contract <b>${cTag}</b>`, c ? "hot" : ""),
+      pill(`Boost <b>x${bx}</b>`, "ok")
+    );
+  }
+
+  // ---- views ----
+  function costToText(cost){
+    if(!cost) return "—";
+    const p=[];
+    if(cost.cash) p.push(`${n(cost.cash)}$`);
+    if(cost.mat)  p.push(`${n(cost.mat)}M`);
+    if(cost.food) p.push(`${n(cost.food)}F`);
+    if(cost.sci)  p.push(`${n(cost.sci)}S`);
+    return p.join(" ");
+  }
+
+  function tileInfo(i){
+    const t=s.tiles[i];
+    const td=terrainDef(t.terrain);
+    const bd=buildDef(t.b);
+    const own = t.own ? "Owned" : (adjOwned(i) ? "Expandable" : "Locked");
+    const fog = t.fog ? "Fogged" : "Revealed";
+    const mut = Object.keys(t.mut||{}).filter(k=>k.startsWith("_picked_")).map(k=>t.mut[k]);
+    return {t, td, bd, own, fog, mut};
+  }
+
+  function cityView(){
+    leftTitle.textContent="City";
+    leftBody.innerHTML = `
+      <div class="kpi">
+        <div class="lab">How to play</div>
+        <div class="mut">
+          Tap the city canvas to select tiles. Expand into fog. Build/upgrade for skyline evolution.
+          Contracts drive fast goals. Wonders unlock major power.
+          Admin: <b>Ctrl+Shift+A</b> → <b>BAKER</b>
+        </div>
+      </div>
+      <div style="height:10px"></div>
+
+      <div class="canvasBox">
+        <canvas id="cityCanvas"></canvas>
+      </div>
+
+      <div style="height:10px"></div>
+
+      <div class="row">
+        <div class="col kpi">
+          <div class="lab">Selected Tile</div>
+          <div class="val" id="sel_name">—</div>
+          <div class="mut" id="sel_desc">—</div>
+          <div style="height:10px"></div>
+          <div class="pillRow" id="sel_pills"></div>
+        </div>
+
+        <div class="col kpi">
+          <div class="lab">Actions</div>
+          <button class="btn good" id="btn_expand">Buy Tile <span class="r" id="exp_price">—</span>
+            <small>Only adjacent to owned tiles.</small>
+          </button>
+          <div style="height:10px"></div>
+          <button class="btn" id="btn_upgrade">Upgrade Building <span class="r" id="up_cost">—</span>
+            <small>Levels create skyline growth & unlock mutations.</small>
+          </button>
+          <div style="height:10px"></div>
+          <button class="btn warn" id="btn_demolish">Demolish <span class="r">Selected</span>
+            <small>Clears the building (no refund).</small>
+          </button>
+        </div>
+      </div>
+    `;
+
+    ensureCanvas();
+    bindCanvasClicks();
+    updateSelectedUI();
+    $("btn_expand").onclick = ()=>buyTile(s.sel);
+    $("btn_upgrade").onclick = upgradeBuilding;
+    $("btn_demolish").onclick = demolish;
+  }
+
+  function bindCanvasClicks(){
+    const c = $("cityCanvas");
+    if(!c) return;
+
+    c.onpointerdown = (ev) => {
+      const rect = c.getBoundingClientRect();
+      const px = (ev.clientX - rect.left) / rect.width;
+      const py = (ev.clientY - rect.top) / rect.height;
+
+      const z=s.size;
+      // use same layout logic as draw()
+      const W=c.width, H=c.height;
+      const pad=20;
+      const gridW = W - pad*2;
+      const gridH = H - pad*2;
+      const gap = Math.max(8, Math.floor(Math.min(gridW,gridH) / (z*6)));
+      const cell = Math.floor((Math.min(gridW,gridH) - gap*(z-1)) / z);
+      const startX = Math.floor((W - (cell*z + gap*(z-1)))/2);
+      const startY = Math.floor((H - (cell*z + gap*(z-1)))/2);
+
+      const X = px * W;
+      const Y = py * H;
+
+      const rx = X - startX;
+      const ry = Y - startY;
+      if (rx < 0 || ry < 0) return;
+
+      const step = cell + gap;
+      const tx = Math.floor(rx / step);
+      const ty = Math.floor(ry / step);
+      if (!inBounds(tx,ty)) return;
+
+      // inside cell box check
+      const lx = rx - tx*step;
+      const ly = ry - ty*step;
+      if (lx > cell || ly > cell) return;
+
+      s.sel = idx(tx,ty);
+      Audio.click();
+      updateSelectedUI();
+      renderKPIs();
+      draw();
+    };
+  }
+
+  function updateSelectedUI(){
+    const info = tileInfo(s.sel);
+    const t=info.t, td=info.td, bd=info.bd;
+
+    const name = $("sel_name");
+    const desc = $("sel_desc");
+    const pillsEl = $("sel_pills");
+    const expPrice = $("exp_price");
+    const upCost = $("up_cost");
+
+    if (!name) return;
+
+    name.textContent = t.fog ? "Fog" : (t.own ? `${bd.name} (Lv ${t.lv})` : info.own);
+    desc.innerHTML =
+      `Terrain: <b>${td.name}</b> • ${t.fog ? "Unknown bonuses" : `Bonuses: ${bonusText(td.bonus)}`}<br/>` +
+      `Status: <b>${info.own}</b> • Visibility: <b>${info.fog}</b>` +
+      (info.mut.length ? `<br/>Mutations: <b>${info.mut.join(", ")}</b>` : ``);
+
+    pillsEl.innerHTML = "";
+    pillsEl.append(
+      pill(`Tile <b>${info.own}</b>`, t.own ? "ok" : (adjOwned(s.sel) ? "hot" : "dead")),
+      pill(`Terrain <b>${td.tag}</b>`, td.rare ? "hot" : ""),
+      pill(`Building <b>${t.fog ? "??" : bd.kind.toUpperCase()}</b>`, t.own && t.b!=="empty" ? "ok" : ""),
+    );
+
+    const price = nextTilePrice();
+    if (expPrice) expPrice.textContent = `${n(price)} cash`;
+
+    const canUp = t.own && t.b!=="empty";
+    const c = canUp ? upgradeCost(t) : null;
+    if (upCost) upCost.textContent = canUp ? costToText(c) : "—";
+  }
+
+  function bonusText(b){
+    if (!b) return "none";
+    const out=[];
+    if (b.cash) out.push(`+${Math.round(b.cash*100)}% cash`);
+    if (b.mat) out.push(`+${Math.round(b.mat*100)}% mat`);
+    if (b.food) out.push(`+${Math.round(b.food*100)}% food`);
+    if (b.sci) out.push(`+${Math.round(b.sci*100)}% sci`);
+    return out.length ? out.join(", ") : "none";
+  }
+
+  function buildView(){
+    leftTitle.textContent="Build";
+    const t=s.tiles[s.sel];
+    const info=tileInfo(s.sel);
+
+    if (t.fog){
+      leftBody.innerHTML = `
+        <div class="kpi">
+          <div class="lab">Fogged Tile</div>
+          <div class="mut">Expand closer to reveal this tile.</div>
+        </div>
+      `;
+      return;
+    }
+    if (!t.own){
+      leftBody.innerHTML = `
+        <div class="kpi">
+          <div class="lab">Unowned Tile</div>
+          <div class="mut">${adjOwned(s.sel) ? "You can expand here from City tab." : "Expand next to your owned tiles first."}</div>
+        </div>
+      `;
+      return;
+    }
+
+    // build menu by era
+    const order = {dawn:0, industrial:1, modern:2, future:3};
+    const e = eraId();
+    const allow = order[e];
+
+    const keys = Object.keys(BUILD).filter(k=>k!=="empty");
+    const list = [];
+    for (const k of keys){
+      const bd=buildDef(k);
+      if (order[bd.era] > allow) continue;
+      const cost=buildCost(k);
+      const ok=canPay(cost);
+      list.push({k, bd, cost, ok});
+    }
+
+    const techList = TECH.filter(t=>canSeeTech(t));
+
+    leftBody.innerHTML = `
+      <div class="row">
+        <div class="col kpi">
+          <div class="lab">Selected</div>
+          <div class="val">${info.bd.name} (Lv ${t.lv})</div>
+          <div class="mut">Terrain: <b>${info.td.name}</b> • Era: <b>${eraName()}</b></div>
+          <div style="height:10px"></div>
+          <div class="grid2">
+            <button class="btn warn" id="b_dem">Demolish</button>
+            <button class="btn good" id="b_up">Upgrade <span class="r">${t.b!=="empty" ? costToText(upgradeCost(t)) : "—"}</span>
+              <small>Mutations unlock at level thresholds.</small>
+            </button>
+          </div>
+        </div>
+
+        <div class="col kpi">
+          <div class="lab">Tech</div>
+          <div class="mut">Research boosts output. Purchase from this tab.</div>
+          <div style="height:10px"></div>
+          <div style="display:flex;flex-direction:column;gap:10px" id="techBox"></div>
+        </div>
+      </div>
+
+      <div style="height:10px"></div>
+
+      <div class="kpi">
+        <div class="lab">Build Menu</div>
+        <div class="mut">Build on the selected tile. Costs scale with city size and duplicates.</div>
+      </div>
+
+      <div style="height:10px"></div>
+      <div style="display:flex;flex-direction:column;gap:10px" id="buildList"></div>
+    `;
+
+    $("b_dem").onclick = demolish;
+    $("b_up").onclick = upgradeBuilding;
+
+    const techBox = $("techBox");
+    techBox.innerHTML = "";
+    for (const tt of techList){
+      const done = !!s.techDone[tt.id];
+      const ok = s.sci >= tt.cost;
+      const btn = document.createElement("button");
+      btn.className = "btn " + (done ? "good" : (ok ? "" : "bad"));
+      btn.innerHTML = `<b>${done ? "✓ " : ""}${tt.name}</b><span class="r">${done ? "Done" : `${n(tt.cost)} sci`}</span><small>${tt.desc} • Era: <b>${tt.era.toUpperCase()}</b></small>`;
+      btn.onclick = ()=>buyTech(tt.id);
+      techBox.appendChild(btn);
+    }
+
+    const buildList = $("buildList");
+    buildList.innerHTML = "";
+    for (const it of list){
+      const btn = document.createElement("button");
+      btn.className = "btn " + (it.ok ? "" : "bad");
+      btn.innerHTML = `<b>${it.bd.name}</b><span class="r">${costToText(it.cost)}</span><small>${buildHint(it.k)}</small>`;
+      btn.onclick = ()=>buildHere(it.k);
+      buildList.appendChild(btn);
+    }
+  }
+
+  function buildHint(k){
+    if(k==="house") return "Workers. Unlocks dense skyline with upgrades.";
+    if(k==="farm") return "Food keeps stability + growth alive. River adjacency boosts.";
+    if(k==="saw") return "Materials fuel expansion and wonders.";
+    if(k==="market") return "Cash engine. Best near housing.";
+    if(k==="factory") return "Big output but heavy power + food. Roads boost it.";
+    if(k==="power") return "Power is the gate. Fix strained grid.";
+    if(k==="park") return "Stability gain. Makes housing happier.";
+    if(k==="police") return "Stability support when city is stressed.";
+    if(k==="wh") return "Storage caps grow huge. Great mid-game.";
+    if(k==="lab") return "Science. Unlocks eras & future tech.";
+    if(k==="port") return "High cash. Loves coast adjacency.";
+    if(k==="hub") return "Adjacency booster. Scales with city size.";
+    if(k==="fusion") return "Massive power. Future spike.";
+    if(k==="arc") return "Huge population. Skyline fantasy.";
+    if(k==="nano") return "Materials monster. Needs power + sci flow.";
+    if(k==="road") return "Industrial artery. Boosts factories/nanofabs.";
+    return "Build it.";
+  }
+
+  function contractsView(){
+    leftTitle.textContent="Contracts";
+    ensureContract();
+    const c = contractProgressSnapshot();
+    const calc = calcCity();
+
+    const left = c ? Math.max(0, c.deadline-now()) : 0;
+    const pct = c ? (c.kind==="prod" ? clamp(c.progress / c.target, 0, 1) : clamp(c.progress / c.target, 0, 1)) : 0;
+
+    leftBody.innerHTML = `
+      <div class="kpi">
+        <div class="lab">Active Contract</div>
+        <div class="val">${c ? c.name : "None"}</div>
+        <div class="mut">
+          Faction: <b>${c ? c.faction.name : "—"}</b> • Vibe: ${c ? c.faction.vibe : "—"}<br/>
+          ${c ? c.desc : "—"}
+        </div>
+        <div style="height:10px"></div>
+        <div class="bar"><div style="width:${Math.floor(pct*100)}%"></div></div>
+        <div class="mini"><span>progress</span><b>${c ? `${n(c.progress)}/${n(c.target)}` : "—"}</b></div>
+        <div class="mini"><span>time left</span><b>${c ? `${Math.ceil(left/1000)}s` : "—"}</b></div>
+      </div>
+
+      <div style="height:10px"></div>
+
+      <div class="row">
+        <div class="col kpi">
+          <div class="lab">Rewards</div>
+          <div class="mut" id="c_rewards"></div>
+          <div style="height:10px"></div>
+          <button class="btn good" id="c_claim"><b>Check / Claim</b> <span class="r">Complete</span>
+            <small>Auto-completes if requirements are met and on time.</small>
+          </button>
+          <div style="height:10px"></div>
+          <button class="btn warn" id="c_skip"><b>Skip Contract</b> <span class="r">Reset streak</span>
+            <small>Use if you get stuck. Not recommended.</small>
+          </button>
+        </div>
+
+        <div class="col kpi">
+          <div class="lab">Streak</div>
+          <div class="val">${s.contract.streak}</div>
+          <div class="mut">Streak boosts rewards and unlocks secrets. Contracts rotate endlessly.</div>
+          <div style="height:10px"></div>
+          <div class="mut">Tip: Contracts are designed to keep the game “one more minute” addictive.</div>
+        </div>
+      </div>
+    `;
+
+    const rw = $("c_rewards");
+    if (c){
+      rw.innerHTML = `
+        +${n(c.reward.cash)} cash<br/>
+        +${n(c.reward.mat)} mat<br/>
+        +${n(c.reward.food)} food<br/>
+        +${n(c.reward.sci)} sci<br/>
+        ${c.reward.legacy ? `+${c.reward.legacy} legacy<br/>` : ``}
+      `;
+    }else rw.textContent="—";
+
+    $("c_claim").onclick = ()=>{ contractProgressSnapshot(); completeContract(); render(); };
+    $("c_skip").onclick = ()=>{
+      if (!confirm("Skip contract? This resets streak.")) return;
+      s.contract.streak=0;
+      s.contract.active=null;
+      say("Contract skipped. Streak reset.");
+      ensureContract();
+      render();
+    };
+  }
+
+  function wondersView(){
+    leftTitle.textContent="Wonders";
+    const activeId = s.wonder.active;
+    const active = activeId ? WONDER.find(w=>w.id===activeId) : null;
+
+    let list="";
+    for (const w of WONDER){
+      const seen = canSeeWonder(w);
+      if(!seen) continue;
+      const done = !!s.wonder.done[w.id];
+      const btnClass = done ? "good" : (activeId===w.id ? "warn" : "");
+      list += `
+        <button class="btn ${btnClass}" data-w="${w.id}">
+          <b>${done ? "✓ " : ""}${w.name}</b>
+          <span class="r">${done ? "Built" : (activeId===w.id ? "Active" : "Start")}</span>
+          <small>${w.desc}</small>
+        </button>
+      `;
+    }
+
+    let progHtml = "";
+    if (active){
+      const p = s.wonder.prog[active.id] || {cash:0,mat:0,food:0,sci:0};
+      const pct = wonderPct(active, p);
+      progHtml = `
+        <div class="kpi">
+          <div class="lab">Active Wonder</div>
+          <div class="val">${active.name}</div>
+          <div class="mut">${active.desc}</div>
+          <div style="height:10px"></div>
+          <div class="bar"><div style="width:${Math.floor(pct*100)}%"></div></div>
+          <div class="mini"><span>progress</span><b>${Math.floor(pct*100)}%</b></div>
+          <div class="mut" style="margin-top:10px">
+            Cash: <b>${n(p.cash)}/${n(active.cost.cash||0)}</b><br/>
+            Mat: <b>${n(p.mat)}/${n(active.cost.mat||0)}</b><br/>
+            Food: <b>${n(p.food)}/${n(active.cost.food||0)}</b><br/>
+            Sci: <b>${n(p.sci)}/${n(active.cost.sci||0)}</b>
+          </div>
+          <div style="height:10px"></div>
+          <button class="btn good" id="w_contrib"><b>Contribute</b> <span class="r">Chunk</span>
+            <small>Pays a “chunk” of resources into the Wonder.</small>
+          </button>
+        </div>
+      `;
+    }else{
+      progHtml = `
+        <div class="kpi">
+          <div class="lab">No Active Wonder</div>
+          <div class="mut">Start one. Wonders are your “holy f—” milestones.</div>
+        </div>
+      `;
+    }
+
+    leftBody.innerHTML = `
+      <div class="row">
+        <div class="col">
+          <div class="kpi">
+            <div class="lab">Wonder List</div>
+            <div class="mut">Build monumental projects that permanently change your city.</div>
+          </div>
+          <div style="height:10px"></div>
+          <div style="display:flex;flex-direction:column;gap:10px" id="w_list">${list || `<div class="mut">No wonders visible yet.</div>`}</div>
+        </div>
+        <div class="col">
+          ${progHtml}
+        </div>
+      </div>
+    `;
+
+    leftBody.querySelectorAll("[data-w]").forEach(b=>{
+      b.onclick = ()=>startWonder(b.dataset.w);
+    });
+    const cbtn = $("w_contrib");
+    if (cbtn) cbtn.onclick = ()=>{ contributeWonder(); render(); };
+  }
+
+  function metaView(){
+    leftTitle.textContent="Meta";
+    const gain = prestigeGain();
+
+    const perks = [
+      {k:"all", name:"All Output", desc:"+3% all production per level."},
+      {k:"cash",name:"Cash", desc:"+4% cash per level."},
+      {k:"mat", name:"Materials", desc:"+4% materials per level."},
+      {k:"food",name:"Food", desc:"+4% food per level."},
+      {k:"sci", name:"Science", desc:"+5% science per level."},
+      {k:"stab",name:"Stability", desc:"+6% stability gain per level."},
+      {k:"pow", name:"Power", desc:"+5% effective power handling per level."},
+    ];
+
+    let perkHtml="";
+    for (const p of perks){
+      const lv=s.meta.perks[p.k]||0;
+      const c=perkCost(p.k);
+      perkHtml += `
+        <button class="btn" data-perk="${p.k}">
+          <b>${p.name}</b><span class="r">Lv ${lv} • ${c} legacy</span>
+          <small>${p.desc}</small>
+        </button>
+      `;
+    }
+
+    leftBody.innerHTML = `
+      <div class="row">
+        <div class="col kpi">
+          <div class="lab">New Era (Prestige)</div>
+          <div class="val">+${gain} Legacy</div>
+          <div class="mut">Reset city/map. Keep legacy, perks, secrets. Keep some tech after multiple resets.</div>
+          <div style="height:10px"></div>
+          <button class="btn good" id="m_prestige"><b>Start New Era</b><span class="r">Reset → Boost</span></button>
+        </div>
+
+        <div class="col kpi">
+          <div class="lab">Secrets Archive</div>
+          <div class="mut" id="sec_list"></div>
+        </div>
+      </div>
+
+      <div style="height:10px"></div>
+
+      <div class="kpi">
+        <div class="lab">Legacy Perks</div>
+        <div class="mut">These are permanent multipliers across runs.</div>
+      </div>
+
+      <div style="height:10px"></div>
+      <div style="display:flex;flex-direction:column;gap:10px">${perkHtml}</div>
+
+      <div style="height:10px"></div>
+
+      <div class="grid2">
+        <button class="btn" id="ex_export">Export Save</button>
+        <button class="btn" id="ex_import">Import Save</button>
+      </div>
+    `;
+
+    $("m_prestige").onclick = prestige;
+
+    leftBody.querySelectorAll("[data-perk]").forEach(b=>{
+      b.onclick = ()=>buyPerk(b.dataset.perk);
+    });
+
+    $("ex_export").onclick = exportSave;
+    $("ex_import").onclick = importSave;
+
+    // secrets list
+    const sec = $("sec_list");
+    sec.innerHTML = "";
+    for (const x of SECRET_LIST){
+      const ok=!!s.secrets.found[x.id];
+      sec.innerHTML += `${ok?"✓":"•"} <b>${x.name}</b> — ${x.desc}<br/>`;
+    }
+  }
+
+  function settingsView(){
+    leftTitle.textContent="Settings";
+    const st = dailyStatus();
+    leftBody.innerHTML = `
+      <div class="kpi">
+        <div class="lab">Save</div>
+        <div class="mut">Offline local save. Export/import available under Meta.</div>
+      </div>
+      <div style="height:10px"></div>
+
+      <div class="grid2">
+        <button class="btn" id="s_autosave"><b>Auto-save</b><span class="r">${s.set.autosave?"on":"off"}</span></button>
+        <button class="btn good" id="s_daily"><b>Daily Shipment</b><span class="r">${st.ready?"Ready":"Claimed"}</span></button>
+      </div>
+
+      <div style="height:10px"></div>
+
+      <div class="grid2">
+        <button class="btn warn" id="s_soft"><b>Soft Reset</b><span class="r">keep legacy</span>
+          <small>Resets city/resources. Keeps legacy/perks/secrets.</small>
+        </button>
+        <button class="btn bad" id="s_wipe"><b>Wipe Save</b><span class="r">delete all</span>
+          <small>Deletes everything and reloads.</small>
+        </button>
+      </div>
+
+      <div style="height:10px"></div>
+
+      <div class="kpi">
+        <div class="lab">Shortcuts</div>
+        <div class="mut">
+          Manual save: <b>Ctrl+S</b><br/>
+          Admin: <b>Ctrl+Shift+A</b> (passcode <b>BAKER</b>)<br/>
+          Secrets: type <b>baker</b> or <b>empire</b>
+        </div>
+      </div>
+    `;
+
+    $("s_autosave").onclick = ()=>{ s.set.autosave=!s.set.autosave; render(); save(); };
+    $("s_daily").onclick = claimDaily;
+    $("s_soft").onclick = softReset;
+    $("s_wipe").onclick = ()=>{ if(confirm("Wipe EVERYTHING?")) wipe(); };
+  }
+
+  // ---- export/import ----
+  function exportSave(){
+    try{
+      const raw=JSON.stringify(s);
+      navigator.clipboard.writeText(raw);
+      toast("Save copied");
+      say("Save exported to clipboard.");
+    }catch(e){
+      prompt("Copy save JSON:", JSON.stringify(s));
+    }
+  }
+  function importSave(){
+    const raw = prompt("Paste save JSON:");
+    if (!raw) return;
+    try{
+      const obj = JSON.parse(raw);
+      s = merge(defaultState(), obj);
+      say("Save imported.");
+      render();
+      save();
+    }catch(e){
+      toast("Invalid save");
+    }
+  }
+
+  function softReset(){
+    if(!confirm("Soft reset city/resources? Keeps legacy/perks/secrets/tech.")) return;
+
+    const keep = {
+      meta:s.meta, secrets:s.secrets, set:s.set, daily:s.daily, techDone:s.techDone, flags:s.flags
+    };
+    const fresh = defaultState();
+    s = merge(fresh, keep);
+
+    // reapply tech effects
+    s.perm = defaultState().perm;
+    for (const id in s.techDone){
+      const t = TECH.find(x=>x.id===id);
+      if(t) t.apply(s);
+    }
+
+    say("Soft reset complete.");
+    render();
+    save();
+  }
+
+  // ---- admin panel ----
+  function openAdmin(){
+    mTitle.textContent="Admin Panel";
+    mBody.innerHTML = `
+      <div class="mut">Passcode required.</div>
+      <div style="height:10px"></div>
+      <input class="in" id="admin_pass" placeholder="Enter passcode"/>
+      <div style="height:10px"></div>
+      <button class="btn good" id="admin_go"><b>Unlock</b></button>
+      <div style="height:12px"></div>
+      <div class="mut">Passcode: <b>BAKER</b></div>
+    `;
+    openModal();
+    $("admin_go").onclick = ()=>{
+      const p = ($("admin_pass").value||"").trim().toUpperCase();
+      if (p!=="BAKER"){ toast("Nope"); return; }
+      adminUnlocked();
+    };
+    setTimeout(()=>$("admin_pass")?.focus(), 30);
+  }
+
+  function adminUnlocked(){
+    mTitle.textContent="Admin Panel (Unlocked)";
+    mBody.innerHTML = `
+      <div class="kpi">
+        <div class="lab">Cheats</div>
+        <div class="mut">Offline/local. Use to test or speedrun.</div>
+      </div>
+      <div style="height:10px"></div>
+
+      <div class="grid2">
+        <button class="btn good" id="a_cash">+1M Cash</button>
+        <button class="btn good" id="a_mat">+500K Mat</button>
+        <button class="btn good" id="a_food">+350K Food</button>
+        <button class="btn good" id="a_sci">+150K Sci</button>
+
+        <button class="btn" id="a_stab">Stability 100%</button>
+        <button class="btn" id="a_era">Unlock Next Era</button>
+        <button class="btn" id="a_reveal">Reveal All Fog</button>
+        <button class="btn" id="a_tiles">Own All Tiles</button>
+
+        <button class="btn warn" id="a_wonder">Complete Active Wonder</button>
+        <button class="btn warn" id="a_contract">Auto-Complete Contract</button>
+        <button class="btn warn" id="a_legacy">+25 Legacy</button>
+        <button class="btn bad" id="a_wipe">WIPE SAVE</button>
+      </div>
+    `;
+    $("a_cash").onclick = ()=>{ s.cash += 1000000; say("Admin: +1M cash."); render(); };
+    $("a_mat").onclick  = ()=>{ s.mat  += 500000; say("Admin: +500K mat."); render(); };
+    $("a_food").onclick = ()=>{ s.food += 350000; say("Admin: +350K food."); render(); };
+    $("a_sci").onclick  = ()=>{ s.sci  += 150000; say("Admin: +150K sci."); render(); };
+
+    $("a_stab").onclick = ()=>{ s.stab = 100 + s.perm.stabCap; say("Admin: stability set."); render(); };
+    $("a_era").onclick = ()=>{
+      if (s.eraIdx < ERA.length-1){
+        s.eraIdx++;
+        say(`Admin: era -> <b>${ERA[s.eraIdx].name}</b>.`);
+        toast(`Era: ${ERA[s.eraIdx].name}`);
+      }else toast("Max era");
+      render();
+    };
+    $("a_reveal").onclick = ()=>{ for(const t of s.tiles) t.fog=false; say("Admin: all fog revealed."); render(); };
+    $("a_tiles").onclick = ()=>{ for(const t of s.tiles){ t.own=true; t.fog=false; if(!t.b) t.b="empty"; } say("Admin: all tiles owned."); render(); };
+
+    $("a_wonder").onclick = ()=>{
+      const id = s.wonder.active;
+      if (!id){ toast("No active wonder"); return; }
+      const w = WONDER.find(x=>x.id===id);
+      const p = s.wonder.prog[id] || (s.wonder.prog[id]={cash:0,mat:0,food:0,sci:0});
+      for (const k of ["cash","mat","food","sci"]){ p[k] = w.cost[k]||0; }
+      // trigger completion
+      contributeWonder();
+      render();
+    };
+
+    $("a_contract").onclick = ()=>{
+      ensureContract();
+      const c = s.contract.active;
+      if (!c) return;
+      c.progress = c.target;
+      completeContract();
+      render();
+    };
+
+    $("a_legacy").onclick = ()=>{ s.meta.legacy += 25; say("Admin: +25 legacy."); render(); };
+    $("a_wipe").onclick = ()=>{ if(confirm("Wipe EVERYTHING?")) wipe(); };
+  }
+
+  // ---- tutorial (60s) ----
+  function runTutorial(){
+    s.tutorial.on = true;
+    s.tutorial.step = 0;
+    s.tutorial.until = now() + 60*1000;
+    say("<b>Tutorial:</b> Expand → Build Market → Build Power → Upgrade Housing.");
+    toast("Tutorial ON");
+  }
+  function tutorialTick(){
+    if (!s.tutorial.on) return;
+    if (now() > s.tutorial.until){
+      s.tutorial.on=false;
+      toast("Tutorial done");
+      say("Tutorial finished. Now free-play.");
+      return;
+    }
+    // show gentle nudges in log only when stuck
+    const step = s.tutorial.step;
+
+    const owned=countOwned();
+    const hasMarket = s.tiles.some(t=>t.own && t.b==="market");
+    const hasPower  = s.tiles.some(t=>t.own && (t.b==="power"||t.b==="fusion"));
+    const houseLvl2 = s.tiles.some(t=>t.own && t.b==="house" && t.lv>=2);
+
+    if (step===0){
+      if (owned>=4){ s.tutorial.step=1; say("Tutorial: good. Now build a <b>Market</b> near Housing."); }
+    }else if (step===1){
+      if (hasMarket){ s.tutorial.step=2; say("Tutorial: now build a <b>Power Plant</b> to prevent strain."); }
+    }else if (step===2){
+      if (hasPower){ s.tutorial.step=3; say("Tutorial: upgrade your <b>Housing</b> once."); }
+    }else if (step===3){
+      if (houseLvl2){ s.tutorial.step=4; say("Tutorial: done. Contracts will keep you moving."); s.tutorial.on=false; }
+    }
+  }
+
+  // ---- wonder pct ----
+  function wonderPct(w,p){
+    let tot=0, done=0;
+    for (const k of ["cash","mat","food","sci"]){
+      const need = w.cost[k]||0;
+      tot += need;
+      done += Math.min(need, p[k]||0);
+    }
+    if (tot<=0) return 1;
+    return clamp(done/tot,0,1);
+  }
+
+  // ---- tick ----
+  function applyTick(dt){
+    ensureContract();
+
+    const calc = calcCity();
+
+    // apply resources
+    s.cash += calc.cashPS * dt;
+    s.mat  += calc.matPS  * dt;
+    s.food += calc.foodPS * dt;
+    s.sci  += calc.sciPS  * dt;
+
+    // power/stat snapshots
+    s.pow = calc.powMake;
+    s.powNeed = calc.powNeed;
+    s.pop = calc.pop;
+    s.jobsNeed = calc.jobsNeed;
+    s.jobsAvail = calc.jobsAvail;
+
+    // clamp resources to storage
+    s.cash = clamp(s.cash, 0, s.store.cashCap);
+    s.mat  = clamp(s.mat,  0, s.store.matCap);
+    s.food = clamp(s.food, 0, s.store.foodCap);
+    s.sci  = clamp(s.sci,  0, s.store.sciCap);
+
+    // stability
+    s.stab += (calc.stabGain - calc.stabDrain) * dt;
+    s.stab = clamp(s.stab, 0, calc.stabCap);
+
+    // xp from functioning city
+    addXP(dt * (0.85 + countOwned()*0.07));
+
+    // era unlock check by science (even without level-up)
+    const next = ERA[s.eraIdx+1];
+    if (next && s.sci >= next.reqSci){
+      s.eraIdx++;
+      say(`<b>ERA UNLOCKED:</b> ${ERA[s.eraIdx].name}.`);
+      toast(`Era: ${ERA[s.eraIdx].name}`);
+    }
+
+    // contract completion
+    contractProgressSnapshot();
+    completeContract();
+
+    // tutorial guidance
+    tutorialTick();
+
+    // blackout survivor secret
+    updateBlackoutSecret(dt, calc);
+
+    // subtle tile animations decay
+    for (const t of s.tiles){
+      if (t.anim>0) t.anim = Math.max(0, t.anim - dt*0.8);
+    }
+
+    // keep wonders “present”: active wonder gets tiny passive progress if you’re rich (feels alive)
+    if (s.wonder.active){
+      const id=s.wonder.active;
+      const w=WONDER.find(x=>x.id===id);
+      if (w){
+        const p=s.wonder.prog[id]||(s.wonder.prog[id]={cash:0,mat:0,food:0,sci:0});
+        // passive drips (very small)
+        p.cash += Math.min(needLeft(w,p,"cash"), dt*3.0);
+        p.mat  += Math.min(needLeft(w,p,"mat"),  dt*1.8);
+        p.food += Math.min(needLeft(w,p,"food"), dt*1.1);
+        p.sci  += Math.min(needLeft(w,p,"sci"),  dt*0.9);
+        // completion check
+        if (wonderPct(w,p) >= 1){
+          s.wonder.done[id]=true;
+          s.wonder.active=null;
+          w.perk(s);
+          Audio.level();
+          say(`<b>WONDER COMPLETE:</b> ${w.name}. ${w.desc}`);
+          toast("WONDER COMPLETE");
+        }
+      }
+    }
+  }
+
+  function needLeft(w,p,k){
+    return Math.max(0, (w.cost[k]||0) - (p[k]||0));
+  }
+
+  // ---- KPIs + render ----
+  function renderKPIs(){
+    const calc = calcCity();
+
+    $("k_cash").textContent = n(s.cash);
+    $("k_mat").textContent  = n(s.mat);
+    $("k_food").textContent = n(s.food);
+
+    $("k_cps").textContent  = n(calc.cashPS);
+    $("k_mps").textContent  = n(calc.matPS);
+    $("k_fps").textContent  = n(calc.foodPS);
+
+    $("k_pow").textContent = Math.floor(calc.powMake);
+    $("k_powNeed").textContent = Math.floor(calc.powNeed);
+    $("k_powState").textContent = calc.pState.label;
+
+    $("k_pop").textContent = n(s.pop);
+    $("k_jobs").textContent = `${n(s.jobsAvail)}/${n(s.jobsNeed)}`;
+    $("k_stab").textContent = Math.floor(s.stab);
+
+    $("k_sci").textContent = n(s.sci);
+    $("k_sps").textContent = n(calc.sciPS);
+
+    $("k_era").textContent = eraName();
+    $("k_cityLvl").textContent = s.cityLvl;
+
+    $("k_leg").textContent = n(s.meta.legacy);
+    const boost = cityBoost();
+    $("k_boost").textContent = "x" + (boost.base*boost.all).toFixed(2);
+
+    const st = dailyStatus();
+    $("daily_cd").textContent = st.ready ? "Ready" : "Claimed";
+    $("btn_daily").classList.toggle("good", st.ready);
+    $("btn_daily").classList.toggle("bad", !st.ready);
+
+    $("saveHint").textContent = s.set.autosave ? "Auto-save on" : "Auto-save off";
+
+    buildPills(calc);
+
+    // warn sound cue on critical power/stability
+    if (!calc.pState.ok && calc.pState.ratio < 0.46 && Math.random() < 0.01){
+      Audio.danger();
+    }
+  }
+
+  function setTab(t){
+    tab=t;
+    tabBtns.forEach(b=>b.classList.toggle("on", b.dataset.tab===tab));
+    render();
+    if (s.set.autosave) save();
+  }
+
+  function render(){
+    renderKPIs();
+
+    if (tab==="city") cityView();
+    else if (tab==="build") buildView();
+    else if (tab==="contracts") contractsView();
+    else if (tab==="wonders") wondersView();
+    else if (tab==="meta") metaView();
+    else if (tab==="settings") settingsView();
+    else cityView();
+
+    if (tab==="city"){
+      ensureCanvas();
+      updateSelectedUI();
+      draw();
+    }
+  }
+
+  // ---- offline gains ----
+  function applyOffline(dtSec){
+    if (dtSec <= 2) return;
+    const cap = 10*60*60;
+    const t = Math.min(cap, dtSec);
+
+    // integrate using current calc snapshot
+    const calc = calcCity();
+
+    s.cash += calc.cashPS * t;
+    s.mat  += calc.matPS  * t;
+    s.food += calc.foodPS * t;
+    s.sci  += calc.sciPS  * t;
+
+    s.cash = clamp(s.cash, 0, s.store.cashCap);
+    s.mat  = clamp(s.mat,  0, s.store.matCap);
+    s.food = clamp(s.food, 0, s.store.foodCap);
+    s.sci  = clamp(s.sci,  0, s.store.sciCap);
+
+    s.stab = clamp(s.stab + (0.03 * t), 0, 100 + s.perm.stabCap);
+
+    addXP(t * (0.45 + countOwned()*0.025));
+
+    say(`Offline progress: +${n(calc.cashPS*t)} cash, +${n(calc.matPS*t)} mat, +${n(calc.foodPS*t)} food (${Math.floor(t)}s).`);
+  }
+
+  // ---- input ----
+  document.addEventListener("keydown", (e)=>{
+    if (e.ctrlKey && e.key.toLowerCase()==="s"){
+      e.preventDefault();
+      save();
+      toast("Saved");
+      return;
+    }
+    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase()==="a"){
+      e.preventDefault();
+      openAdmin();
+      return;
+    }
+    if (!e.ctrlKey && !e.metaKey && e.key.length===1){
+      secretKeyInput(e.key.toLowerCase());
+    }
+  });
+
+  tabBtns.forEach(b=>b.onclick = ()=>setTab(b.dataset.tab));
+  $("btn_daily").onclick = claimDaily;
+  $("btn_save").onclick = ()=>{ save(); toast("Saved"); };
+  $("btn_sound").onclick = ()=>{
+    const on = Audio.toggle();
+    $("sound_state").textContent = on ? "On" : "Off";
+    toast(on ? "Sound ON" : "Sound OFF");
+  };
+  $("btn_tutorial").onclick = runTutorial;
+
+  // ---- loop ----
+  let lastFrame = now();
+  let saveTimer = 0;
+
+  function tick(){
+    const t=now();
+    let dt=(t-lastFrame)/1000;
+    lastFrame=t;
+    dt=clamp(dt, 0, 0.25);
+
+    applyTick(dt);
+
+    renderKPIs();
+
+    // redraw city canvas even off-tab? keep it light: only if city tab
+    if (tab==="city") draw();
+
+    saveTimer += dt;
+    if (s.set.autosave && saveTimer >= 25){
+      saveTimer = 0;
+      save();
+    }
+
+    requestAnimationFrame(tick);
+  }
+
+  // ---- boot ----
+  const hadSave = load();
+  const nowT = now();
+  const last = s.t?.last || nowT;
+  const offline = Math.max(0, (nowT-last)/1000);
+  s.t.last = nowT;
+
+  if (hadSave){
+    applyOffline(offline);
+    say("Loaded save.");
+  }else{
+    say("New world generated. Build something unreal.");
+    runTutorial();
+  }
+
+  // default sound off label
+  $("sound_state").textContent = Audio.state() ? "On" : "Off";
+
+  ensureContract();
+  render();
+  save();
+
+  requestAnimationFrame(()=>{ lastFrame=now(); requestAnimationFrame(tick); });
+
+})();
+</script>
+</body>
+</html>
