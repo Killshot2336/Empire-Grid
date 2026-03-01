@@ -184,3 +184,4 @@ export class Simulation {
   isStorming() { return this._weather === "storm"; }
   stormLevel() { return this._storm; }
 }
+
