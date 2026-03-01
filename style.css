@@ -1,4 +1,3 @@
-body { outline: 10px solid lime ! important; }
 :root{
   --bg0:#05070c;
   --bg1:#080d19;
@@ -219,7 +218,7 @@ select{cursor:pointer}
 .buildItem .txt .d{font-size:11px; color:rgba(234,242,255,.60)}
 .buildItem.sel{border-color:rgba(125,243,255,.44); box-shadow:0 0 0 2px rgba(125,243,255,.12) inset}
 
-.hidden{display:none}
+.hidden{display:none !important}
 
 /* Spotlight tutorial */
 #spotlight{position:fixed; inset:0; z-index:60; pointer-events:auto}
@@ -262,3 +261,4 @@ select{cursor:pointer}
 }
 .adminTitle{font-family:var(--mono); font-weight:900; letter-spacing:.14em}
 .adminSub{margin-top:6px; color:rgba(234,242,255,.62); font-size:12px}
+
